@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: 'userservice'
+  main:
+    banner-mode: 'off'
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: 'jdbc:postgresql://${spring.application.name}db:5432/postgres'
+    username: postgres
+    password: postgres
+  jackson:
+    default-property-inclusion: non_empty
+  liquibase:
+    enabled: true
+    change-log: changelog.sql
+    driver-class-name: org.postgresql.Driver
+    user: postgres
+    password: postgres
+    url: 'jdbc:postgresql://${spring.application.name}db:5432/postgres'
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.UUIDSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      transaction-id-prefix: '${spring.application.name}'
+    consumer:
+      properties:
+        spring.json.trusted.packages: "*"
+      group-id: '${spring.application.name}'
+      key-deserializer: org.apache.kafka.common.serialization.UUIDDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    streams:
+      application-id: '${spring.application.name}-streams'
+      replication-factor: 1
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$UUIDSerde
+        default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
+        spring.json.trusted.packages: "*"
+
+SECRET_KEY: 12412561235231562356234532542354623546235462
+
+server:
+  port: 8091
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  tracing:
+    enabled: true
+    sampling.probability: 0.05
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans

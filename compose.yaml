@@ -1,0 +1,142 @@
+name: micromarket
+
+x-logging: &logging
+  driver: gelf
+  options:
+    gelf-address: "udp://host.docker.internal:12201"
+  #driver: "json-file"
+
+x-logging-none: &logging-none
+  driver: "none"
+
+x-healthcheck: &healthcheck
+  interval: 5s
+  timeout: 5s
+  retries: 30
+  start_period: 5s
+
+x-spring-env: &spring-env
+  server.port: 8080
+  KAFKA_SERVERS: "kafka:9091"
+  management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans
+  JAVA_OPTS: -Xms64M -Xmx512M
+  SECRET_KEY: qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq
+
+services:
+  nginx:
+    image: nginx:1.27.0-alpine
+    depends_on:
+      balanceservice:
+        condition: service_healthy
+      orderservice:
+        condition: service_healthy
+      productservice:
+        condition: service_healthy
+      stockservice:
+        condition: service_healthy
+      userservice:
+        condition: service_healthy
+    logging: *logging
+    ports: [ "8080:80" ]
+    volumes:
+      - './nginx.conf:/etc/nginx/nginx.conf'
+
+  balanceservice:
+    build: ./balanceservice
+    logging: *logging
+    depends_on:
+      balanceservicedb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *spring-env
+      spring.application.name: 'balanceservice'
+    expose: [ "8080" ]
+    healthcheck:
+      test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:8080/actuator/health || exit 1"
+      <<: *healthcheck
+
+  balanceservicedb:
+    image: postgres:alpine
+    logging: *logging
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    expose: [ "5432" ]
+    command: >
+      postgres 
+      -c ssl=off
+      -c wal_level=logical
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      <<: *healthcheck
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.5
+    expose: [ "9091", "9092" ]
+    logging: *logging
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_BROKER_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka:9091
+      KAFKA_LISTENERS: BROKER://kafka:9091, CONTROLLER://kafka:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: "-Xms128m -Xmx512m"
+    healthcheck:
+      test: "nc -z kafka 9091 || exit 1"
+      <<: *healthcheck
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:4.0.1
+    restart: always
+    logging: *logging
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports: [ "9090:9000" ]
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:9091"
+    healthcheck:
+      test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:9000 || exit 1"
+      <<: *healthcheck
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    logging: *logging
+    restart: always
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports: [ "9091:9090" ]
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider 127.0.0.1:9090 || exit 1"
+      <<: *healthcheck
+
+  grafana:
+    image: grafana/grafana:10.4.4
+    logging: *logging
+    restart: always
+    ports: [ "3000:3000" ]
+    healthcheck:
+      test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:3000 || exit 1"
+      <<: *healthcheck
+
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    logging: *logging
+    restart: always
+    ports: [ "9411:9411" ]
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider 127.0.0.1:9411 || exit 1"
+      <<: *healthcheck
