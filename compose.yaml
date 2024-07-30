@@ -1,10 +1,10 @@
 name: micromarket
 
 x-logging: &logging
-  driver: gelf
-  options:
-    gelf-address: "udp://host.docker.internal:12201"
-  #driver: "json-file"
+  #driver: gelf
+  #options:
+  #  gelf-address: "udp://host.docker.internal:12201"
+  driver: "json-file"
 
 x-logging-none: &logging-none
   driver: "none"
@@ -21,6 +21,7 @@ x-spring-env: &spring-env
   management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans
   JAVA_OPTS: -Xms64M -Xmx512M
   SECRET_KEY: qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq
+  API_KEY: qwtiuqwtiuqiwutiqwitiqwutiqwuituqwiotuqiowutiq
   app.client.balance: http://balanceservice:8080/api/balance
   app.client.order: http://orderservice:8080/api/order
   app.client.product: http://productservice:8080/api/product

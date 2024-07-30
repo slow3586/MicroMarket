@@ -1,8 +1,8 @@
 package com.slow3586.micromarket.stockservice;
 
 
-import com.slow3586.micromarket.api.stock.AddStockRequest;
 import com.slow3586.micromarket.api.order.OrderTransaction;
+import com.slow3586.micromarket.api.stock.AddStockRequest;
 import com.slow3586.micromarket.api.stock.StockChangeDto;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +22,12 @@ public class StockService {
     StockChangeMapper stockChangeMapper;
 
     public StockChangeDto addStock(AddStockRequest request) {
-        final StockChange save = stockChangeRepository.save(new StockChange()
-            .setValue(10)
-            .setProductId(UUID.randomUUID()));
+        final StockChange stockChange = stockChangeRepository.save(
+            new StockChange()
+                .setValue(request.getValue())
+                .setProductId(request.getProductId()));
 
-        return stockChangeMapper.toDto(save);
+        return stockChangeMapper.toDto(stockChange);
     }
 
     public OrderTransaction processNewOrder(OrderTransaction order) {
@@ -41,10 +42,10 @@ public class StockService {
                 .sum();
 
             if (stock < total) {
-                throw new IllegalStateException("No stock");
+                throw new IllegalStateException("Not enough stock");
             }
 
-            StockChange stockChange = stockChangeRepository.save(new StockChange()
+            final StockChange stockChange = stockChangeRepository.save(new StockChange()
                 .setProductId(productId)
                 .setOrderId(order.getId())
                 .setValue(-total));
@@ -53,5 +54,9 @@ public class StockService {
         });
 
         return order;
+    }
+
+    public long getProductStock(UUID productId) {
+        return stockChangeRepository.sumAllByProductId(productId);
     }
 }

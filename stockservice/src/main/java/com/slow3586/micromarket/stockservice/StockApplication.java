@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PROTECTED)
 @EnableKafka
-@EnableMethodSecurity
 public class StockApplication {
     public static void main(String[] args) {
         SpringApplication.run(StockApplication.class, args);

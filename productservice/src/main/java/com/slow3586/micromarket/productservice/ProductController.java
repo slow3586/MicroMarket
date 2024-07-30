@@ -6,14 +6,17 @@ import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.product.RegisterProductRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/product")
@@ -22,6 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class ProductController implements ProductClient {
     ProductService productService;
+
+    @GetMapping("{productId}")
+    public ProductDto findProductById(@PathVariable UUID productId) {
+        return productService.findProductById(productId);
+    }
 
     @PostMapping("register")
     public ProductDto registerProduct(@RequestBody @Valid RegisterProductRequest request){

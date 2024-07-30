@@ -1,7 +1,7 @@
 package com.slow3586.micromarket.stockservice;
 
-import com.slow3586.micromarket.api.order.OrderTransaction;
 import com.slow3586.micromarket.api.order.OrderTopics;
+import com.slow3586.micromarket.api.order.OrderTransaction;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,7 +20,8 @@ public class StockConsumer {
     StockService stockService;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @KafkaListener(topics = OrderTopics.Transaction.PRODUCT, errorHandler = "orderTransactionListenerErrorHandler")
+    @KafkaListener(topics = OrderTopics.Transaction.PRODUCT,
+        errorHandler = "orderTransactionListenerErrorHandler")
     public void processNewOrder(OrderTransaction order) {
         kafkaTemplate.send(
             OrderTopics.Transaction.STOCK,

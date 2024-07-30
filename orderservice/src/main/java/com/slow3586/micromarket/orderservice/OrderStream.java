@@ -5,9 +5,9 @@ import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
 import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderTransaction;
-import com.slow3586.micromarket.orderservice.entity.Order;
+import com.slow3586.micromarket.orderservice.repository.OrderItemRepository;
+import com.slow3586.micromarket.orderservice.repository.OrderRepository;
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.Tuple;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,7 +23,6 @@ import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j

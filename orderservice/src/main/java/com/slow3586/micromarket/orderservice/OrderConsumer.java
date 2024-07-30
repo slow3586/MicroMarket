@@ -1,11 +1,11 @@
 package com.slow3586.micromarket.orderservice;
 
-import com.slow3586.micromarket.api.balance.BalanceTopics;
-import com.slow3586.micromarket.api.balance.BalanceTransferDto;
 import com.slow3586.micromarket.api.order.NewOrderRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderTransaction;
 import com.slow3586.micromarket.orderservice.entity.Order;
+import com.slow3586.micromarket.orderservice.repository.OrderItemRepository;
+import com.slow3586.micromarket.orderservice.repository.OrderRepository;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

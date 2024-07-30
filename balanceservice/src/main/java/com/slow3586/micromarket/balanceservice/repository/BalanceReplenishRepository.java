@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -16,5 +15,5 @@ public interface BalanceReplenishRepository extends JpaRepository<BalanceRepleni
     @Query("""
         select coalesce(sum(b.value), 0) from balance_replenish b
         """)
-    Integer sumAllByUserId(@NotNull UUID userId);
+    long sumAllByUserId(@NotNull UUID userId);
 }

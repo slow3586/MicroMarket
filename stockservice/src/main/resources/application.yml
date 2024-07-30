@@ -36,12 +36,6 @@ spring:
         default.key.serde: org.apache.kafka.common.serialization.Serdes$UUIDSerde
         default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
         spring.json.trusted.packages: "*"
-
-SECRET_KEY: 12412561235231562356234532542354623546235462
-
-server:
-  port: 8091
-
 management:
   endpoints:
     web:

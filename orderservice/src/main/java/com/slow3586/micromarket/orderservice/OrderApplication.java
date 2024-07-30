@@ -33,7 +33,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PROTECTED)
 @EnableKafka
-@EnableMethodSecurity
 @EnableKafkaStreams
 public class OrderApplication {
     @NonFinal

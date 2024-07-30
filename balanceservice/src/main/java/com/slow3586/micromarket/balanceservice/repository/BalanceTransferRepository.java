@@ -1,6 +1,5 @@
 package com.slow3586.micromarket.balanceservice.repository;
 
-import com.slow3586.micromarket.balanceservice.entity.BalanceReplenish;
 import com.slow3586.micromarket.balanceservice.entity.BalanceTransfer;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,13 +18,13 @@ public interface BalanceTransferRepository extends JpaRepository<BalanceTransfer
         where b.senderId = :userId
         and b.status = 'COMPLETED'
         """)
-    Integer sumAllPositiveByUserId(@NotNull UUID userId);
+    long sumAllPositiveByUserId(@NotNull UUID userId);
     @Query("""
         select coalesce(sum(b.value), 0) from balance_transfer b
         where b.receiverId = :userId
         and b.status <> 'AWAITING'
         """)
-    Integer sumAllNegativeByUserId(@NotNull UUID userId);
+    long sumAllNegativeByUserId(@NotNull UUID userId);
     @Query("""
         select b from balance_transfer b where b.status = 'AWAITING'
         """)

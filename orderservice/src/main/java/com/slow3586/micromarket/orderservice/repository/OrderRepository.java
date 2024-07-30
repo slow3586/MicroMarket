@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.orderservice;
+package com.slow3586.micromarket.orderservice.repository;
 
 import com.slow3586.micromarket.orderservice.entity.Order;
 import org.springframework.data.jpa.repository.JpaRepository;

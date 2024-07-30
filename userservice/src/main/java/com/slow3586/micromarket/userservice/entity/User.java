@@ -1,8 +1,8 @@
-package com.slow3586.micromarket.userservice;
+package com.slow3586.micromarket.userservice.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -10,6 +10,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.validator.constraints.Length;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -24,10 +25,12 @@ public class User {
     @Id
     @UuidGenerator
     UUID id;
-    @NotNull
+    @Length(min = 4, max = 16)
     String login;
-    @NotNull
+    @NotBlank
     String password;
+    @Length(min = 4, max = 16)
+    String name;
 
     @Override
     public final boolean equals(Object o) {

@@ -1,10 +1,12 @@
 package com.slow3586.micromarket.userservice;
 
 
-import com.slow3586.micromarket.api.user.LoginRequest;
 import com.slow3586.micromarket.api.order.OrderTransaction;
+import com.slow3586.micromarket.api.user.LoginRequest;
 import com.slow3586.micromarket.api.user.RegisterUserRequest;
 import com.slow3586.micromarket.api.user.UserDto;
+import com.slow3586.micromarket.userservice.entity.User;
+import com.slow3586.micromarket.userservice.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.AccessLevel;
@@ -20,6 +22,7 @@ import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -48,17 +51,18 @@ public class UserService {
 
     public UserDto registerUser(RegisterUserRequest request) {
         User user = userRepository.save(new User()
-            .setLogin("login")
-            .setPassword("password"));
+            .setName(request.getLogin())
+            .setLogin(request.getLogin())
+            .setPassword(passwordEncoder.encode(request.getPassword())));
 
         return userMapper.toDto(user);
     }
 
     public String login(LoginRequest request) {
-        User user = userRepository.findByLogin("login").orElse(null);
+        User user = userRepository.findByLogin(request.getLogin()).orElse(null);
         if (user == null
             || !passwordEncoder.matches(
-            "password",
+            request.getPassword(),
             user.getPassword())
         ) {
             throw new IllegalArgumentException("Incorrect login or password!");
@@ -87,5 +91,11 @@ public class UserService {
         }
 
         return userMapper.toDto(user);
+    }
+
+    public UserDto findUserById(UUID uuid) {
+        return userRepository.findById(uuid)
+            .map(userMapper::toDto)
+            .orElseThrow();
     }
 }

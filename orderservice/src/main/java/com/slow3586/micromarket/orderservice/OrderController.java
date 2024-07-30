@@ -3,8 +3,8 @@ package com.slow3586.micromarket.orderservice;
 
 import com.slow3586.micromarket.api.order.NewOrderRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ public class OrderController {
 
     @PostMapping("create")
     @Transactional(transactionManager = "kafkaTransactionManager")
-    public CompletableFuture<UUID> create(@RequestBody @NonNull NewOrderRequest newOrderRequest) {
+    public CompletableFuture<UUID> create(@RequestBody @Valid NewOrderRequest newOrderRequest) {
         return replyingKafkaTemplate.sendAndReceive(
                 new ProducerRecord<>(OrderTopics.Request.REQUEST_CREATE, newOrderRequest))
             .thenApply(ConsumerRecord::value)

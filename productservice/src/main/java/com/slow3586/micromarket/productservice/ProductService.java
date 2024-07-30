@@ -11,6 +11,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,5 +36,11 @@ public class ProductService {
                     .setSellerId(SecurityUtils.getPrincipalId())
                     .setName("product")
                     .setPrice(100)));
+    }
+
+    public ProductDto findProductById(UUID productId) {
+        return productRepository.findById(productId)
+            .map(productMapper::toDto)
+            .orElseThrow();
     }
 }

@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -88,7 +87,7 @@ public class BalanceService {
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
     protected void processBalanceTransferAwaitingPayment(BalanceTransferDto balanceTransferDto) {
-        final int senderBalance = this.getUserBalance(balanceTransferDto.getSenderId());
+        final long senderBalance = this.getUserBalance(balanceTransferDto.getSenderId());
 
         if (senderBalance >= balanceTransferDto.getValue()) {
             kafkaTemplate.send(BalanceTopics.Transfer.RESERVED,
@@ -97,7 +96,7 @@ public class BalanceService {
         }
     }
 
-    public int getUserBalance(UUID userId) {
+    public long getUserBalance(UUID userId) {
         return balanceReplenishRepository.sumAllByUserId(userId)
             + balanceTransferRepository.sumAllPositiveByUserId(userId)
             - balanceTransferRepository.sumAllNegativeByUserId(userId);

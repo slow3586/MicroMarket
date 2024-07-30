@@ -5,6 +5,7 @@ import com.slow3586.micromarket.api.order.NewOrderRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.orderservice.entity.Order;
 import com.slow3586.micromarket.orderservice.entity.OrderItem;
+import com.slow3586.micromarket.orderservice.repository.OrderRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
