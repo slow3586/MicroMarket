@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.order;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class OrderTransactionListenerErrorHandler implements ConsumerAwareListen
     ) {
         log.error("#handle", exception);
 
-        OrderDto order = (OrderDto) message.getPayload();
+        OrderTransaction order = (OrderTransaction) message.getPayload();
 
         return MessageBuilder.withPayload(order.setError(exception.getMessage()))
             .setHeader(KafkaHeaders.EXCEPTION_FQCN, exception.getCause().getClass().getSimpleName())

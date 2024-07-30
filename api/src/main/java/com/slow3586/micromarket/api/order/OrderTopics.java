@@ -1,29 +1,30 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.order;
 
 public final class OrderTopics {
-    private static final String ERROR = ".error";
     private static final String NAME = "order";
-    private static final String TRANSACTION = ".transaction";
-    private static final String REQUEST = ".request";
-    private static final String RESPONSE = ".response";
-    private static final String STATUS = ".status";
 
     public static final class Transaction {
-        public final static String CREATED = NAME + TRANSACTION + ".created";
+        private static final String TRANSACTION = ".transaction";
+        public final static String NEW = NAME + TRANSACTION + ".new";
         public final static String PRODUCT = NAME + TRANSACTION + ".product";
-        public final static String SHOP = NAME + TRANSACTION + ".shop";
-        public final static String CUSTOMER = NAME + TRANSACTION + ".customer";
+        public final static String USER = NAME + TRANSACTION + ".user";
         public final static String STOCK = NAME + TRANSACTION + ".stock";
         public final static String BALANCE = NAME + TRANSACTION + ".balance";
-        public final static String INVENTORY = NAME + TRANSACTION + ".inventory";
-        public final static String PAYMENT = NAME + TRANSACTION + ".payment";
+        public final static String CONFIRMATION = NAME + TRANSACTION + ".confirmation";
         public final static String PUBLISH = NAME + TRANSACTION + ".publish";
-        public final static String PAID = NAME + TRANSACTION + ".paid";
         public final static String COMPLETED = NAME + TRANSACTION + ".completed";
-        public final static String ERROR = NAME + TRANSACTION + OrderTopics.ERROR;
+        public final static String ERROR = NAME + TRANSACTION + ".error";
+        public static final class Awaiting {
+            private static final String AWAITING = ".awaiting";
+
+            public final static String BALANCE = Transaction.BALANCE + AWAITING;
+            public final static String CONFIRMATION = Transaction.CONFIRMATION + AWAITING;
+        }
     }
 
     public static final class Request {
+        private static final String REQUEST = ".request";
+        private static final String RESPONSE = ".response";
         public final static String REQUEST_CREATE = NAME + REQUEST + ".create";
         public final static String REQUEST_CREATE_RESPONSE = REQUEST_CREATE + RESPONSE;
         public final static String REQUEST_COMPLETED = NAME + REQUEST + ".completed";
@@ -33,7 +34,9 @@ public final class OrderTopics {
     }
 
     public static final class Status {
-        public final static String STATUS_CANCELLED = NAME + STATUS + ".cancelled";
-        public final static String STATUS_COMPLETED = NAME + STATUS + ".completed";
+        private static final String STATUS = ".status";
+        public final static String PAID = NAME + STATUS + ".paid";
+        public final static String CANCELLED = NAME + STATUS + ".cancelled";
+        public final static String COMPLETED = NAME + STATUS + ".completed";
     }
 }

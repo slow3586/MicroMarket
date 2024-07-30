@@ -4,10 +4,13 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- changeset slow3586:1
 CREATE TABLE "order"
 (
-    id        UUID NOT NULL,
-    buyer_id  UUID,
-    seller_id UUID,
-    status    TEXT,
+    id         UUID NOT NULL,
+    buyer_id   UUID,
+    seller_id  UUID,
+    status     TEXT,
+    error      TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE,
+    paid_at    TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT pk_order PRIMARY KEY (id)
 );
 

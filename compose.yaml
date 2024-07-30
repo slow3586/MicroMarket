@@ -10,10 +10,10 @@ x-logging-none: &logging-none
   driver: "none"
 
 x-healthcheck: &healthcheck
-  interval: 5s
+  interval: 1s
   timeout: 5s
   retries: 30
-  start_period: 5s
+  start_period: 15s
 
 x-spring-env: &spring-env
   server.port: 8080
@@ -21,6 +21,36 @@ x-spring-env: &spring-env
   management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans
   JAVA_OPTS: -Xms64M -Xmx512M
   SECRET_KEY: qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq
+  app.client.balance: http://balanceservice:8080/api/balance
+  app.client.order: http://orderservice:8080/api/order
+  app.client.product: http://productservice:8080/api/product
+  app.client.stock: http://stockservice:8080/api/stock
+  app.client.user: http://userservice:8080/api/user
+
+x-spring-conf: &spring-conf
+  environment:
+    <<: *spring-env
+  logging: *logging
+  expose: [ "8080" ]
+  healthcheck:
+    test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:8080/actuator/health || exit 1"
+    <<: *healthcheck
+
+x-postgresdb-conf: &postgres-conf
+  image: postgres:alpine
+  logging: *logging
+  environment:
+    POSTGRES_DB: postgres
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+  expose: [ "5432" ]
+  command: >
+    postgres 
+    -c ssl=off
+    -c wal_level=logical
+  healthcheck:
+    test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+    <<: *healthcheck
 
 services:
   nginx:
@@ -43,35 +73,63 @@ services:
 
   balanceservice:
     build: ./balanceservice
-    logging: *logging
     depends_on:
       balanceservicedb:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    environment:
-      <<: *spring-env
-      spring.application.name: 'balanceservice'
-    expose: [ "8080" ]
-    healthcheck:
-      test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:8080/actuator/health || exit 1"
-      <<: *healthcheck
+    <<: *spring-conf
 
   balanceservicedb:
-    image: postgres:alpine
-    logging: *logging
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    expose: [ "5432" ]
-    command: >
-      postgres 
-      -c ssl=off
-      -c wal_level=logical
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
-      <<: *healthcheck
+    <<: *postgres-conf
+
+  orderservice:
+    build: ./orderservice
+    depends_on:
+      orderservicedb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    <<: *spring-conf
+
+  orderservicedb:
+    *postgres-conf
+
+  productservice:
+    build: ./productservice
+    depends_on:
+      productservicedb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    <<: *spring-conf
+
+  productservicedb:
+    *postgres-conf
+
+  stockservice:
+    build: ./productservice
+    depends_on:
+      stockservicedb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    <<: *spring-conf
+
+  stockservicedb:
+    *postgres-conf
+
+  userservice:
+    build: ./userservice
+    depends_on:
+      userservicedb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    <<: *spring-conf
+
+  userservicedb:
+    *postgres-conf
 
   kafka:
     image: confluentinc/cp-kafka:7.5.5

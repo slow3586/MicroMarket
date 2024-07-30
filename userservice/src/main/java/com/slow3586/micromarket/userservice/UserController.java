@@ -1,56 +1,38 @@
 package com.slow3586.micromarket.userservice;
 
 
-import com.slow3586.micromarket.api.mainservice.client.CustomerClient;
-import com.slow3586.micromarket.api.mainservice.dto.GetQrCodeResponse;
-import com.slow3586.micromarket.api.mainservice.entity.Customer;
+import com.slow3586.micromarket.api.user.LoginRequest;
+import com.slow3586.micromarket.api.user.RegisterUserRequest;
+import com.slow3586.micromarket.api.user.UserClient;
+import com.slow3586.micromarket.api.user.UserDto;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
 @RestController
-@RequestMapping("api/customer")
+@RequestMapping("api/user")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @Slf4j
-public class UserController implements CustomerClient {
+public class UserController implements UserClient {
     UserService userService;
 
-    @GetMapping("findById/{id}")
-    public Customer findById(@PathVariable UUID id) {
-        return userService.findById(id);
+    @PostMapping("register")
+    public UserDto registerUser(RegisterUserRequest request) {
+        return userService.registerUser(request);
     }
 
-    @GetMapping("findOrCreateByTelegramId/{id}")
-    public Customer findOrCreateByTelegramId(@PathVariable String id) {
-        return userService.findOrCreateByTelegramId(id);
+    @PostMapping("login")
+    public String login(LoginRequest request) {
+        return userService.login(request);
     }
 
-    @GetMapping("findByQrCode/{qrCode}")
-    @Secured({"SYSTEM", "CASHIER", "ADMIN"})
-    public Customer findByQrCode(@PathVariable String qrCode) {
-        return userService.findByQrCode(qrCode);
-    }
-
-    @GetMapping("getQrCode/{id}")
-    @Secured({"SYSTEM", "CASHIER", "ADMIN"})
-    public GetQrCodeResponse getQrCode(String telegramId) {
-        return userService.getQrCode(telegramId);
-    }
-
-    @PostMapping("updateContact")
-    @Secured({"SYSTEM", "CASHIER", "ADMIN"})
-    public Customer updateContact(@RequestBody Customer customer) {
-        return userService.updateContact(customer);
+    @PostMapping("token")
+    public UserDto token(String token) {
+        return userService.token(token);
     }
 }

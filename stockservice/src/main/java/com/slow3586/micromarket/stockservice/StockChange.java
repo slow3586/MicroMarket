@@ -25,6 +25,7 @@ public class StockChange {
     @UuidGenerator
     UUID id;
     UUID productId;
+    UUID orderId;
     @NotNull
     int value;
 

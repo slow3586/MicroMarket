@@ -26,7 +26,10 @@ public class OrderItem {
     @UuidGenerator
     UUID id;
     UUID productId;
+    UUID sellerId;
     int quantity;
+    String status;
+    String error;
 
     @ManyToOne
     @JoinColumn(nullable = false)

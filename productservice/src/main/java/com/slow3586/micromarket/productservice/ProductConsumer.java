@@ -1,7 +1,7 @@
 package com.slow3586.micromarket.productservice;
 
-import com.slow3586.micromarket.api.OrderDto;
-import com.slow3586.micromarket.api.OrderTopics;
+import com.slow3586.micromarket.api.order.OrderTransaction;
+import com.slow3586.micromarket.api.order.OrderTopics;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,10 +20,12 @@ public class ProductConsumer {
     ProductService productService;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @KafkaListener(topics = OrderTopics.Transaction.CREATED, errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrder(OrderDto order) {
-        kafkaTemplate.send(OrderTopics.Transaction.PRODUCT,
+    @KafkaListener(topics = OrderTopics.Transaction.USER,
+        errorHandler = "orderTransactionListenerErrorHandler")
+    public void processNewOrder(OrderTransaction order) {
+        kafkaTemplate.send(
+            OrderTopics.Transaction.PRODUCT,
             order.getId(),
-            productService.processOrder(order));
+            productService.processNewOrder(order));
     }
 }

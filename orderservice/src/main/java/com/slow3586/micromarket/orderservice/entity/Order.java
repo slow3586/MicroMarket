@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -27,8 +28,11 @@ public class Order {
     @UuidGenerator
     UUID id;
     UUID buyerId;
-    UUID sellerId;
     String status;
+    String error;
+
+    Instant createdAt;
+    Instant paidAt;
 
     @OneToMany
     @JoinColumn

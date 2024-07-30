@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.user;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

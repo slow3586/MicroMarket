@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
 @Configuration
-public class DefaultJsonSerde {
+public class DefaultKafkaConfig {
     @Bean
     public JsonSerde<Object> defaultJsonSerde() {
         JsonSerde<Object> jsonSerde = new JsonSerde<>();

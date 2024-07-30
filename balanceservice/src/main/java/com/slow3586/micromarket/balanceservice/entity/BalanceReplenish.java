@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.balanceservice;
+package com.slow3586.micromarket.balanceservice.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,14 +20,15 @@ import java.util.UUID;
 @ToString
 @RequiredArgsConstructor
 @Accessors(chain = true)
-@Entity(name = "balance_change")
-public class BalanceChange {
+@Entity(name = "balance_replenish")
+public class BalanceReplenish {
     @Id
     @UuidGenerator
     UUID id;
     @NotNull
     UUID userId;
     int value;
+    Instant createdAt;
 
     @Override
     public final boolean equals(Object o) {
@@ -35,8 +37,8 @@ public class BalanceChange {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        BalanceChange balanceChange = (BalanceChange) o;
-        return getId() != null && Objects.equals(getId(), balanceChange.getId());
+        BalanceReplenish balanceReplenish = (BalanceReplenish) o;
+        return getId() != null && Objects.equals(getId(), balanceReplenish.getId());
     }
 
     @Override

@@ -6,6 +6,7 @@ CREATE TABLE stock_change
 (
     id         UUID    NOT NULL,
     product_id UUID,
+    order_id   UUID,
     value      INTEGER NOT NULL,
     CONSTRAINT pk_stock_change PRIMARY KEY (id)
 );

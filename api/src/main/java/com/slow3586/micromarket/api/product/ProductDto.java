@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.product;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

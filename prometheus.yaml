@@ -1,0 +1,51 @@
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: 'customerservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'customerservice:8080'
+  - job_name: 'frontend'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'frontend:8080'
+  - job_name: 'inventoryservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'inventoryservice:8080'
+  - job_name: 'orderservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'orderservice:8080'
+  - job_name: 'paymentservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'paymentservice:8080'
+  - job_name: 'productservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'productservice:8080'
+  - job_name: 'telegrambot'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'telegrambot:8080'
+  - job_name: 'utilservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'utilservice:8080'
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets:
+          - 'cadvisor:8080'
+  - job_name: 'kafka'
+    static_configs:
+      - targets:
+          - 'kafka:7072'

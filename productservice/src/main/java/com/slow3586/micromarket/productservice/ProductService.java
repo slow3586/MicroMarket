@@ -1,8 +1,10 @@
 package com.slow3586.micromarket.productservice;
 
 
-import com.slow3586.micromarket.api.OrderDto;
-import com.slow3586.micromarket.api.ProductDto;
+import com.slow3586.micromarket.api.order.OrderTransaction;
+import com.slow3586.micromarket.api.product.ProductDto;
+import com.slow3586.micromarket.api.product.RegisterProductRequest;
+import com.slow3586.micromarket.api.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -15,17 +17,22 @@ import org.springframework.stereotype.Service;
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class ProductService {
     ProductRepository productRepository;
+    ProductMapper productMapper;
 
-    public OrderDto processOrder(OrderDto order) {
+    public OrderTransaction processNewOrder(OrderTransaction order) {
         return order.setOrderItemList(
             order.getOrderItemList()
                 .stream()
-                .map(item -> {
-                    Product p = productRepository.findById(item.getId()).orElseThrow();
-                    return item.setProduct(new ProductDto().setId(p.getId())
-                        .setName(p.getName())
-                        .setPrice(p.getPrice())
-                        .setSellerId(p.getSellerId()));
-                }).toList());
+                .map(item -> item.setProduct(
+                    productMapper.toDto(productRepository.findById(item.getId()).orElseThrow()))).toList());
+    }
+
+    public ProductDto registerProduct(RegisterProductRequest request) {
+        return productMapper.toDto(
+            productRepository.save(
+                new Product()
+                    .setSellerId(SecurityUtils.getPrincipalId())
+                    .setName("product")
+                    .setPrice(100)));
     }
 }
