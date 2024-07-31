@@ -1,7 +1,8 @@
 package com.slow3586.micromarket.stockservice;
 
 
-import com.slow3586.micromarket.api.stock.AddStockRequest;
+import com.slow3586.micromarket.api.product.ProductClient;
+import com.slow3586.micromarket.api.stock.UpdateStockRequest;
 import com.slow3586.micromarket.api.stock.StockChangeDto;
 import com.slow3586.micromarket.api.stock.StockClient;
 import jakarta.validation.Valid;
@@ -24,14 +25,17 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class StockController implements StockClient {
     StockService stockService;
+    ProductClient productClient;
 
     @GetMapping("{productId}")
+    @PreAuthorize("isAuthenticated()")
     public long getProductStock(@PathVariable UUID productId) {
         return stockService.getProductStock(productId);
     }
 
-    @PostMapping("add")
-    public StockChangeDto addStock(@RequestBody @Valid AddStockRequest request) {
-        return stockService.addStock(request);
+    @PostMapping("update")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public StockChangeDto updateStock(@RequestBody @Valid UpdateStockRequest request) {
+        return stockService.updateStock(request);
     }
 }

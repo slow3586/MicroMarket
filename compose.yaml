@@ -11,22 +11,23 @@ x-logging-none: &logging-none
 
 x-healthcheck: &healthcheck
   interval: 1s
-  timeout: 5s
+  timeout: 1s
   retries: 30
   start_period: 15s
 
 x-spring-env: &spring-env
   server.port: 8080
   KAFKA_SERVERS: "kafka:9091"
+  management.tracing.enabled: false
   management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans
-  JAVA_OPTS: -Xms64M -Xmx512M
+  JAVA_OPTS: -Xms64M -Xmx1024M
   SECRET_KEY: qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq
   API_KEY: qwtiuqwtiuqiwutiqwitiqwutiqwuituqwiotuqiowutiq
-  app.client.balance: http://balanceservice:8080/api/balance
-  app.client.order: http://orderservice:8080/api/order
-  app.client.product: http://productservice:8080/api/product
-  app.client.stock: http://stockservice:8080/api/stock
-  app.client.user: http://userservice:8080/api/user
+  app.client.balance: http://balanceservice:8080
+  app.client.order: http://orderservice:8080
+  app.client.product: http://productservice:8080
+  app.client.stock: http://stockservice:8080
+  app.client.user: http://userservice:8080
 
 x-spring-conf: &spring-conf
   environment:
@@ -94,7 +95,7 @@ services:
     <<: *spring-conf
 
   orderservicedb:
-    *postgres-conf
+    <<: *postgres-conf
 
   productservice:
     build: ./productservice
@@ -106,10 +107,10 @@ services:
     <<: *spring-conf
 
   productservicedb:
-    *postgres-conf
+    <<: *postgres-conf
 
   stockservice:
-    build: ./productservice
+    build: ./stockservice
     depends_on:
       stockservicedb:
         condition: service_healthy
@@ -118,7 +119,7 @@ services:
     <<: *spring-conf
 
   stockservicedb:
-    *postgres-conf
+    <<: *postgres-conf
 
   userservice:
     build: ./userservice
@@ -130,7 +131,8 @@ services:
     <<: *spring-conf
 
   userservicedb:
-    *postgres-conf
+    <<: *postgres-conf
+    ports: [ "5444:5432" ]
 
   kafka:
     image: confluentinc/cp-kafka:7.5.5
@@ -169,33 +171,4 @@ services:
       KAFKA_BROKERCONNECT: "kafka:9091"
     healthcheck:
       test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:9000 || exit 1"
-      <<: *healthcheck
-
-  prometheus:
-    image: prom/prometheus:v2.53.0
-    logging: *logging
-    restart: always
-    volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
-    ports: [ "9091:9090" ]
-    healthcheck:
-      test: "wget --no-verbose --tries=1 --spider 127.0.0.1:9090 || exit 1"
-      <<: *healthcheck
-
-  grafana:
-    image: grafana/grafana:10.4.4
-    logging: *logging
-    restart: always
-    ports: [ "3000:3000" ]
-    healthcheck:
-      test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:3000 || exit 1"
-      <<: *healthcheck
-
-  zipkin:
-    image: openzipkin/zipkin:3.4
-    logging: *logging
-    restart: always
-    ports: [ "9411:9411" ]
-    healthcheck:
-      test: "wget --no-verbose --tries=1 --spider 127.0.0.1:9411 || exit 1"
       <<: *healthcheck

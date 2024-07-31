@@ -36,6 +36,14 @@ spring:
         default.key.serde: org.apache.kafka.common.serialization.Serdes$UUIDSerde
         default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
         spring.json.trusted.packages: "*"
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            logger-level: full
+            default-request-headers:
+              Authorization: Bearer ${API_KEY}
 management:
   endpoints:
     web:
@@ -58,3 +66,4 @@ management:
   zipkin:
     tracing:
       endpoint: http://localhost:9411/api/v2/spans
+logging.level.com.slow3586.micromarket.api: debug

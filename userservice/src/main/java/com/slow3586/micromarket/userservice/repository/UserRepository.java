@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-@Transactional(transactionManager = "transactionManager")
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByLogin(String login);
 }

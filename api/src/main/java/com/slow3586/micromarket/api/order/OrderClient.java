@@ -11,7 +11,6 @@ import java.util.UUID;
 @FeignClient(
     value = "order",
     url = "${app.client.order}/api/order")
-@Headers("Authorization: API ${API_KEY}")
 public interface OrderClient {
     @PostMapping("create")
     UUID create(@RequestBody @Valid NewOrderRequest newOrderRequest);

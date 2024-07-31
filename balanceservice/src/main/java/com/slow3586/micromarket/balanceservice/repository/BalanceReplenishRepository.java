@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Repository
-@Transactional(transactionManager = "transactionManager")
 public interface BalanceReplenishRepository extends JpaRepository<BalanceReplenish, UUID> {
     @Query("""
         select coalesce(sum(b.value), 0) from balance_replenish b

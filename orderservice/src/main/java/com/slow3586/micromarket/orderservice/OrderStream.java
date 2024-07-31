@@ -17,7 +17,9 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Suppressed;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
+@DependsOn({"orderConfig", "balanceConfig"})
 public class OrderStream {
     OrderRepository orderRepository;
     OrderItemRepository orderItemRepository;
@@ -44,6 +47,8 @@ public class OrderStream {
             Consumed.with(Serdes.UUID(), orderTransactionSerde);
         Consumed<UUID, BalanceTransferDto> balanceTransferConsumed =
             Consumed.with(Serdes.UUID(), balanceTransferDtoJsonSerde);
+        Produced<UUID, OrderTransaction> orderTransactionProduced =
+            Produced.with(Serdes.UUID(), orderTransactionSerde);
 
         KTable<UUID, OrderTransaction> orderNewTable = streamsBuilder.table(
             OrderTopics.Transaction.NEW,
@@ -69,7 +74,7 @@ public class OrderStream {
         KTable<UUID, OrderTransaction> orderWithConfirmationTable = streamsBuilder.table(
             OrderTopics.Transaction.CONFIRMATION,
             orderTransactionConsumed);
-        KTable<UUID, BalanceTransferDto> balanceTransferTable = streamsBuilder.table(
+        KTable<UUID, BalanceTransferDto> balanceTransferReservedTable = streamsBuilder.table(
             BalanceTopics.Transfer.RESERVED,
             balanceTransferConsumed);
 
@@ -80,34 +85,36 @@ public class OrderStream {
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("TIMEOUT_NEW"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR);
+            .to(OrderTopics.Transaction.ERROR, orderTransactionProduced);
 
         // BALANCE RECEIVED
-        orderAwaitingBalanceTable
-            .join(balanceTransferTable, (a, b) ->
-                a.setOrderItemList(a.getOrderItemList().stream()
-                    .peek(i -> {
+        balanceTransferReservedTable
+            .join(orderAwaitingBalanceTable, (a) -> {a.Get}, (a, b) ->
+                a.setOrderItemList(a.getOrderItemList()
+                    .stream()
+                    .map(i -> {
                         if (i.getId() == b.getOrderItemId()) {
-                            i.setBalanceTransferDto(b);
+                            return i.setBalanceTransferDto(b);
                         }
+                        return i;
                     }).toList()))
             .toStream()
-            .to(OrderTopics.Transaction.BALANCE);
+            .to(OrderTopics.Transaction.BALANCE, orderTransactionProduced);
 
         // PAYMENT TIMEOUT
         orderAwaitingBalanceTable
             .suppress(Suppressed.untilTimeLimit(Duration.ofMinutes(1), null))
             .leftJoin(orderWithBalanceTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
-            .mapValues(v -> v.key.setError("TIMEOUT_PAYMENT"))
+            .mapValues(v -> v.key.setError("TIMEOUT_BALANCE"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR);
+            .to(OrderTopics.Transaction.ERROR, orderTransactionProduced);
 
         // CONFIRM RECEIVED
         orderAwaitingConfirmationTable
             .join(orderWithConfirmationTable, (a, b) -> a)
             .toStream()
-            .to(OrderTopics.Transaction.CONFIRMATION);
+            .to(OrderTopics.Transaction.CONFIRMATION, orderTransactionProduced);
 
         // CONFIRM TIMEOUT
         orderAwaitingConfirmationTable
@@ -116,6 +123,6 @@ public class OrderStream {
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("TIMEOUT_CONFIRMATION"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR);
+            .to(OrderTopics.Transaction.ERROR, orderTransactionProduced);
     }
 }

@@ -17,9 +17,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class NewOrderRequest {
-    UUID buyerId;
-    @NotNull
-    UUID sellerId;
     @Size(min = 1, max = 10)
     List<OrderRequestItem> orderRequestItemList;
 

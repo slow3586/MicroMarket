@@ -11,7 +11,6 @@ import java.util.UUID;
 @FeignClient(
     value = "user",
     url = "${app.client.user}/api/user")
-@Headers("Authorization: API ${API_KEY}")
 public interface UserClient {
     @GetMapping("{uuid}")
     UserDto findUserById(@PathVariable UUID uuid);

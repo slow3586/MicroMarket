@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api;
 
+import com.slow3586.micromarket.api.utils.SecurityUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
@@ -23,6 +24,7 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.UUID;
 
 @Component
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
@@ -42,16 +44,15 @@ public class DefaultSecurityWebFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         UsernamePasswordAuthenticationToken authenticationToken =
             new UsernamePasswordAuthenticationToken(null, null);
-
         try {
-            String authorizationHeader = request.getHeader("Authorization");
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String bearerToken = authorizationHeader.substring("Bearer ".length());
+            final String authorizationHeader = request.getHeader(SecurityUtils.AUTH_HEADER_NAME);
+            if (authorizationHeader != null && authorizationHeader.startsWith(SecurityUtils.BEARER_PREFIX)) {
+                final String bearerToken = authorizationHeader.substring(SecurityUtils.BEARER_PREFIX.length());
                 if (Objects.equals(apiKey, bearerToken)) {
                     authenticationToken = new UsernamePasswordAuthenticationToken(
                         "SYSTEM",
                         null,
-                        AuthorityUtils.createAuthorityList("SYSTEM"));
+                        AuthorityUtils.createAuthorityList("API"));
                 } else {
                     final Claims claims = Jwts.parser()
                         .verifyWith(secretKey)
@@ -64,13 +65,14 @@ public class DefaultSecurityWebFilter extends OncePerRequestFilter {
                     }
 
                     authenticationToken = new UsernamePasswordAuthenticationToken(
-                        claims.getSubject(),
+                        UUID.fromString(claims.getSubject()),
                         null,
                         AuthorityUtils.createAuthorityList("USER"));
                 }
             }
+            //log.info("request {}: {} - {}", request.getRequestURI(), authorizationHeader, authenticationToken);
         } catch (Exception e) {
-            log.error("error", e);
+            log.error("Unable to authorize", e);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);

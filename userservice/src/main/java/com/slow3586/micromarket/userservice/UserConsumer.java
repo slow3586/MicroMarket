@@ -20,7 +20,7 @@ public class UserConsumer {
     UserService userService;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @KafkaListener(topics = OrderTopics.Transaction.NEW,
+    @KafkaListener(topics = OrderTopics.Transaction.PRODUCT,
         errorHandler = "orderTransactionListenerErrorHandler")
     public void processNewOrder(OrderTransaction order) {
         kafkaTemplate.send(

@@ -3,8 +3,13 @@ package com.slow3586.micromarket.orderservice;
 
 import com.slow3586.micromarket.api.order.NewOrderRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
+import com.slow3586.micromarket.api.order.OrderTransaction;
+import com.slow3586.micromarket.api.product.ProductDto;
+import com.slow3586.micromarket.api.user.UserDto;
+import com.slow3586.micromarket.api.utils.SecurityUtils;
 import com.slow3586.micromarket.orderservice.entity.Order;
 import com.slow3586.micromarket.orderservice.entity.OrderItem;
+import com.slow3586.micromarket.orderservice.repository.OrderItemRepository;
 import com.slow3586.micromarket.orderservice.repository.OrderRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +19,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -25,6 +32,7 @@ import java.util.UUID;
 public class OrderService {
     OrderRepository orderRepository;
     KafkaTemplate<UUID, Object> kafkaTemplate;
+    private final OrderItemRepository orderItemRepository;
 
     @Async
     @Scheduled(cron = "* */1 * * * *")
@@ -37,19 +45,40 @@ public class OrderService {
                         order.setError("TIMEOUT"))));
     }
 
-    public Order newOrder(NewOrderRequest newOrderRequest) {
-        return orderRepository.save(
+    @Transactional(transactionManager = "transactionManager")
+    public UUID newOrder(NewOrderRequest request) {
+        final Order order = orderRepository.save(
             new Order()
-                .setBuyerId(newOrderRequest.getBuyerId())
+                .setBuyerId(SecurityUtils.getPrincipalId())
                 .setStatus("NEW")
-                .setCreatedAt(Instant.now())
-                .setOrderItemList(newOrderRequest.getOrderRequestItemList()
-                    .stream()
-                    .map(i -> new OrderItem()
-                        .setQuantity(i.getQuantity())
-                        .setSellerId(newOrderRequest.getSellerId())
-                        .setStatus("NEW")
-                        .setProductId(i.getProductId()))
-                    .toList()));
+                .setCreatedAt(Instant.now()));
+
+        final List<OrderItem> orderItemList =
+            request.getOrderRequestItemList()
+                .stream()
+                .map(i -> orderItemRepository.save(new OrderItem()
+                    .setOrder(order)
+                    .setQuantity(i.getQuantity())
+                    .setStatus("NEW")
+                    .setProductId(i.getProductId())))
+                .toList();
+
+        kafkaTemplate.executeInTransaction((kafkaOperations) ->
+            kafkaOperations.send(OrderTopics.Transaction.NEW,
+                order.getId(),
+                new OrderTransaction()
+                    .setId(order.getId())
+                    .setBuyer(new UserDto().setId(order.getBuyerId()))
+                    .setStatus(order.getStatus())
+                    .setOrderItemList(orderItemList
+                        .stream()
+                        .map(item ->
+                            new OrderTransaction.OrderItemDto()
+                                .setId(item.getId())
+                                .setQuantity(item.getQuantity())
+                                .setProduct(new ProductDto().setId(item.getProductId())))
+                        .toList())));
+
+        return order.getId();
     }
 }

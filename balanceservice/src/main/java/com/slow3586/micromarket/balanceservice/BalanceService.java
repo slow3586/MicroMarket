@@ -1,6 +1,7 @@
 package com.slow3586.micromarket.balanceservice;
 
 
+import com.slow3586.micromarket.api.balance.BalanceReplenishDto;
 import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
 import com.slow3586.micromarket.api.balance.ReplenishBalanceRequest;
@@ -37,34 +38,46 @@ public class BalanceService {
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
     @Transactional(transactionManager = "transactionManager")
-    public void replenishBalance(ReplenishBalanceRequest request) {
-        final UUID userId = SecurityUtils.getPrincipalId();
-
+    public void replenishBalance(final ReplenishBalanceRequest request) {
         final BalanceReplenish balanceReplenish = balanceReplenishRepository.save(
             new BalanceReplenish()
-                .setUserId(userId)
-                .setValue(100));
+                .setUserId(request.getUserId())
+                .setValue(request.getValue()));
 
-        kafkaTemplate.send(BalanceTopics.Replenish.NEW, userId, balanceReplenish);
+        kafkaTemplate.executeInTransaction((kafkaOperations) ->
+            kafkaOperations.send(
+                BalanceTopics.Replenish.NEW,
+                request.getUserId(),
+                balanceReplenish));
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.STOCK, errorHandler = "orderTransactionListenerErrorHandler")
+    @KafkaListener(topics = OrderTopics.Transaction.STOCK,
+        errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    protected void processNewOrder(OrderTransaction order) {
-        order.setOrderItemList(order.getOrderItemList().stream().map(item -> {
-            final int total = item.getQuantity() * item.getProduct().getPrice();
+    protected void processNewOrder(final OrderTransaction order) {
+        order.setBuyer(order.getBuyer().setBalance(this.getUserBalance(order.getBuyer().getId())))
+            .setOrderItemList(order.getOrderItemList().stream().map(item -> {
+                final int total = item.getQuantity() * item.getProduct().getPrice();
 
-            final BalanceTransfer balanceTransfer =
-                balanceTransferRepository.save(
-                    new BalanceTransfer()
-                        .setSenderId(order.getBuyer().getId())
-                        .setReceiverId(item.getSeller().getId())
-                        .setValue(total)
-                        .setStatus("AWAITING")
-                        .setOrderId(order.getId())
-                        .setCreatedAt(Instant.now()));
-            return item.setBalanceTransferDto(balanceTransferMapper.toDto(balanceTransfer));
-        }).toList());
+                final BalanceTransfer balanceTransfer =
+                    balanceTransferRepository.save(
+                        new BalanceTransfer()
+                            .setSenderId(order.getBuyer().getId())
+                            .setReceiverId(item.getSeller().getId())
+                            .setValue(total)
+                            .setStatus("AWAITING")
+                            .setOrderId(order.getId())
+                            .setCreatedAt(Instant.now()));
+
+                final BalanceTransferDto balanceTransferDto = balanceTransferMapper.toDto(balanceTransfer);
+
+                kafkaTemplate.send(
+                    BalanceTopics.Transfer.AWAITING,
+                    balanceTransferDto.getId(),
+                    balanceTransferDto);
+
+                return item.setBalanceTransferDto(balanceTransferDto);
+            }).toList());
 
         kafkaTemplate.send(
             OrderTopics.Transaction.Awaiting.BALANCE,
@@ -73,26 +86,32 @@ public class BalanceService {
     }
 
     @KafkaListener(topics = BalanceTopics.Replenish.NEW,
-        errorHandler = "orderTransactionListenerErrorHandler")
+        errorHandler = "loggingKafkaListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    protected void processNewBalanceReplenish(BalanceTransferDto balanceTransferDto) {
+    protected void processNewBalanceReplenish(final BalanceReplenishDto balanceReplenishDto) {
         balanceTransferRepository.findAllAwaitingByUserId(
-            balanceTransferDto.getSenderId()
+            balanceReplenishDto.getUserId()
         ).forEach(balanceTransfer ->
             this.processBalanceTransferAwaitingPayment(
                 balanceTransferMapper.toDto(balanceTransfer)));
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Awaiting.BALANCE,
-        errorHandler = "orderTransactionListenerErrorHandler")
+    @KafkaListener(topics = BalanceTopics.Transfer.AWAITING,
+        errorHandler = "loggingKafkaListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    protected void processBalanceTransferAwaitingPayment(BalanceTransferDto balanceTransferDto) {
+    protected void processBalanceTransferAwaitingPayment(final BalanceTransferDto balanceTransferDto) {
         final long senderBalance = this.getUserBalance(balanceTransferDto.getSenderId());
 
         if (senderBalance >= balanceTransferDto.getValue()) {
+            final BalanceTransferDto newBalanceTransfer = balanceTransferRepository
+                .findById(balanceTransferDto.getId())
+                .map(t -> t.setStatus("RESERVED"))
+                .map(balanceTransferMapper::toDto)
+                .orElseThrow();
+
             kafkaTemplate.send(BalanceTopics.Transfer.RESERVED,
-                balanceTransferDto.getId(),
-                balanceTransferDto);
+                newBalanceTransfer.getId(),
+                newBalanceTransfer);
         }
     }
 

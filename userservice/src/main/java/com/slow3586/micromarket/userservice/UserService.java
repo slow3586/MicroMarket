@@ -41,9 +41,10 @@ public class UserService {
         return order.setBuyer(userRepository.findById(order.getBuyer().getId())
                 .map(userMapper::toDto)
                 .orElseThrow())
-            .setOrderItemList(order.getOrderItemList().stream()
+            .setOrderItemList(order.getOrderItemList()
+                .stream()
                 .map(item ->
-                    item.setSeller(userRepository.findById(item.getSeller().getId())
+                    item.setSeller(userRepository.findById(item.getProduct().getSellerId())
                         .map(userMapper::toDto)
                         .orElseThrow()))
                 .toList());
@@ -69,7 +70,7 @@ public class UserService {
         }
 
         return Jwts.builder()
-            .subject(user.getLogin())
+            .subject(user.getId().toString())
             .expiration(Date.from(
                 Instant.now().plus(
                     Duration.ofMinutes(tokenMinutes))))

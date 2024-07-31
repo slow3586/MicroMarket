@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-@Transactional(transactionManager = "transactionManager")
 public interface BalanceTransferRepository extends JpaRepository<BalanceTransfer, UUID> {
     @Query("""
         select coalesce(sum(b.value), 0) from balance_transfer b

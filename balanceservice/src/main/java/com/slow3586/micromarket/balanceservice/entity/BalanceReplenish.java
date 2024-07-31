@@ -1,6 +1,8 @@
 package com.slow3586.micromarket.balanceservice.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -23,6 +25,7 @@ import java.util.UUID;
 @Entity(name = "balance_replenish")
 public class BalanceReplenish {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     UUID id;
     @NotNull

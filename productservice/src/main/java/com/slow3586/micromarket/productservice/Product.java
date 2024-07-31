@@ -1,8 +1,12 @@
 package com.slow3586.micromarket.productservice;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,11 +20,13 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Accessors(chain = true)
 @Entity(name = "product")
 public class Product {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     UUID id;
     UUID sellerId;

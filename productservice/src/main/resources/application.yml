@@ -36,6 +36,13 @@ spring:
         default.key.serde: org.apache.kafka.common.serialization.Serdes$UUIDSerde
         default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
         spring.json.trusted.packages: "*"
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            default-request-headers:
+              Authorization: Bearer ${API_KEY}
 management:
   endpoints:
     web:

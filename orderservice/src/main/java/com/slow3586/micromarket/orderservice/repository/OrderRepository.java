@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-@Transactional(transactionManager = "transactionManager")
 public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Query(value = """
         select o from order o\

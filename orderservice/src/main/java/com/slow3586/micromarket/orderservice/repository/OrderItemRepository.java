@@ -8,6 +8,5 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Repository
-@Transactional(transactionManager = "transactionManager")
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 }

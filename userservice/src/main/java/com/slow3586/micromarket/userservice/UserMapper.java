@@ -1,11 +1,11 @@
 package com.slow3586.micromarket.userservice;
 
+import com.slow3586.micromarket.api.mapstruct.IMapStructConfig;
+import com.slow3586.micromarket.api.mapstruct.IMapStructMapper;
 import com.slow3586.micromarket.api.user.UserDto;
 import com.slow3586.micromarket.userservice.entity.User;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
-public interface UserMapper {
-    UserDto toDto(User entity);
-    User toEntity(UserDto dto);
+@Mapper(config = IMapStructConfig.class)
+public interface UserMapper extends IMapStructMapper<UserDto, User> {
 }

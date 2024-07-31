@@ -1,6 +1,5 @@
 package com.slow3586.micromarket.api.product;
 
-import feign.Headers;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,11 +12,10 @@ import java.util.UUID;
 @FeignClient(
     value = "product",
     url = "${app.client.product}/api/product")
-@Headers("Authorization: API ${API_KEY}")
 public interface ProductClient {
     @GetMapping("{productId}")
     ProductDto findProductById(@PathVariable UUID productId);
 
-    @PostMapping("register")
-    ProductDto registerProduct(@RequestBody @Valid RegisterProductRequest request);
+    @PostMapping("create")
+    ProductDto createProduct(@RequestBody @Valid CreateProductRequest request);
 }

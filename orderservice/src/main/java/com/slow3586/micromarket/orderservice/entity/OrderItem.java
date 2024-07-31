@@ -1,9 +1,16 @@
 package com.slow3586.micromarket.orderservice.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -23,16 +30,20 @@ import java.util.UUID;
 @Entity(name = "order_item")
 public class OrderItem {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     UUID id;
+    @NotNull
     UUID productId;
-    UUID sellerId;
+    @Min(1)
+    @Max(999999)
     int quantity;
+    @NotBlank
     String status;
     String error;
 
     @ManyToOne
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "order_id", nullable = false)
     Order order;
 
     @Override

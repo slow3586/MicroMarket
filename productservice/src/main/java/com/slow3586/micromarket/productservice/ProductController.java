@@ -3,12 +3,13 @@ package com.slow3586.micromarket.productservice;
 
 import com.slow3586.micromarket.api.product.ProductClient;
 import com.slow3586.micromarket.api.product.ProductDto;
-import com.slow3586.micromarket.api.product.RegisterProductRequest;
+import com.slow3586.micromarket.api.product.CreateProductRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,12 +28,14 @@ public class ProductController implements ProductClient {
     ProductService productService;
 
     @GetMapping("{productId}")
+    @PreAuthorize("isAuthenticated()")
     public ProductDto findProductById(@PathVariable UUID productId) {
         return productService.findProductById(productId);
     }
 
-    @PostMapping("register")
-    public ProductDto registerProduct(@RequestBody @Valid RegisterProductRequest request){
-        return productService.registerProduct(request);
+    @PostMapping("create")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public ProductDto createProduct(@RequestBody @Valid CreateProductRequest request){
+        return productService.createProduct(request);
     }
 }

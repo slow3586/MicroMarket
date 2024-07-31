@@ -16,20 +16,18 @@ import java.util.UUID;
 public class OrderTransaction implements Serializable {
     UUID id;
     UserDto buyer;
-    List<OrderItemDto> orderItemList;
     String status;
     String error;
+    List<OrderItemDto> orderItemList;
 
     @Data
     @Accessors(chain = true)
     public static class OrderItemDto implements Serializable {
         UUID id;
-        String status;
-        String error;
-        int quantity;
-        UserDto seller;
         ProductDto product;
-        BalanceTransferDto balanceTransferDto;
         StockChangeDto stockChange;
+        UserDto seller;
+        BalanceTransferDto balanceTransferDto;
+        int quantity;
     }
 }

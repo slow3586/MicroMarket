@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class RegisterProductRequest {
+public class CreateProductRequest {
     String name;
     int price;
 }
