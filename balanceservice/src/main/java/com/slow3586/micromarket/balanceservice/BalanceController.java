@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.Serializable;
+import java.util.List;
+
 @RestController
 @RequestMapping("api/balance")
 @RequiredArgsConstructor
@@ -28,6 +31,12 @@ public class BalanceController implements BalanceClient {
     @PreAuthorize("hasAnyAuthority('USER')")
     public long getCurrentUserBalance() {
         return balanceService.getUserBalance(SecurityUtils.getPrincipalId());
+    }
+
+    @GetMapping("list")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public List<Serializable> getCurrentUserBalanceChanges() {
+        return balanceService.getUserBalanceChanges(SecurityUtils.getPrincipalId());
     }
 
     @PostMapping("replenish/create")

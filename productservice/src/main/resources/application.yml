@@ -26,9 +26,14 @@ spring:
     consumer:
       properties:
         spring.json.trusted.packages: "*"
+        fetch.max.wait.ms: 50
+        fetch.min.bytes: 1048576
+        processing.guarantee: exactly_once
       group-id: '${spring.application.name}'
       key-deserializer: org.apache.kafka.common.serialization.UUIDDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      fetch-min-size: 1MB
+      fetch-max-wait: 50ms
     streams:
       application-id: '${spring.application.name}-streams'
       replication-factor: 1
@@ -36,6 +41,9 @@ spring:
         default.key.serde: org.apache.kafka.common.serialization.Serdes$UUIDSerde
         default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
         spring.json.trusted.packages: "*"
+        fetch.max.wait.ms: 50
+        fetch.min.bytes: 1048576
+        processing.guarantee: exactly_once
   cloud:
     openfeign:
       client:

@@ -39,11 +39,11 @@ public class UserService {
     SecretKey secretKey;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @KafkaListener(topics = OrderTopics.Transaction.PRODUCT,
+    @KafkaListener(topics = OrderTopics.Initialization.PRODUCT,
         errorHandler = "orderTransactionListenerErrorHandler")
     public void processOrderCreated(OrderDto order) {
         kafkaTemplate.send(
-            OrderTopics.Transaction.USER,
+            OrderTopics.Initialization.USER,
             order.getId(),
             order.setBuyer(userRepository.findById(order.getBuyer().getId())
                     .map(userMapper::toDto)

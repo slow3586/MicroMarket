@@ -19,7 +19,7 @@ public class OrderDto implements Serializable {
     UserDto buyer;
     ProductDto product;
     int quantity;
-    String status;
+    OrderTopics.Status status;
     String error;
     Instant createdAt;
 

@@ -16,11 +16,12 @@
     <modules>
         <module>api</module>
         <module>balanceservice</module>
+        <module>deliveryservice</module>
+        <module>notificationservice</module>
         <module>orderservice</module>
         <module>productservice</module>
         <module>stockservice</module>
         <module>userservice</module>
-        <module>deliveryservice</module>
     </modules>
     <url/>
     <licenses>

@@ -1,12 +1,14 @@
 package com.slow3586.micromarket.orderservice;
 
 
+import com.slow3586.micromarket.api.audit.AuditDisabled;
 import com.slow3586.micromarket.api.delivery.DeliveryClient;
 import com.slow3586.micromarket.api.order.CreateOrderRequest;
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
+import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.product.ProductClient;
 import com.slow3586.micromarket.api.product.ProductDto;
+import com.slow3586.micromarket.api.stock.StockClient;
 import com.slow3586.micromarket.api.user.UserClient;
 import com.slow3586.micromarket.api.user.UserDto;
 import com.slow3586.micromarket.api.utils.SecurityUtils;
@@ -27,6 +29,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
+@Transactional(transactionManager = "transactionManager")
 public class OrderService {
     OrderRepository orderRepository;
     OrderMapper orderMapper;
@@ -34,6 +37,7 @@ public class OrderService {
     ProductClient productClient;
     UserClient userClient;
     DeliveryClient deliveryClient;
+    StockClient stockClient;
 
     public OrderDto getOrder(UUID orderId) {
         final OrderDto orderDto = orderRepository
@@ -47,18 +51,17 @@ public class OrderService {
         return orderDto;
     }
 
-    @Transactional(transactionManager = "transactionManager")
     public OrderDto createOrder(CreateOrderRequest request) {
         final Order order = orderRepository.save(
             new Order()
                 .setBuyerId(SecurityUtils.getPrincipalId())
                 .setProductId(request.getProductId())
                 .setQuantity(request.getQuantity())
-                .setStatus("NEW")
+                .setStatus(OrderTopics.Status.INITIALIZATION_AWAITING)
                 .setCreatedAt(Instant.now()));
 
         kafkaTemplate.executeInTransaction((kafkaOperations) ->
-            kafkaOperations.send(OrderTopics.Transaction.NEW,
+            kafkaOperations.send(OrderTopics.CREATED,
                 order.getId(),
                 new OrderDto()
                     .setId(order.getId())
@@ -71,16 +74,15 @@ public class OrderService {
         return orderMapper.toDto(order);
     }
 
-    @Transactional(transactionManager = "transactionManager")
     public OrderDto updateOrderCancelled(UUID orderId) {
         OrderDto orderDto = orderRepository
             .findById(orderId)
-            .map(o -> o.setStatus("CANCELLED"))
+            .map(o -> o.setStatus(OrderTopics.Status.CANCELLED))
             .map(orderMapper::toDto)
             .orElseThrow();
 
         kafkaTemplate.executeInTransaction((kafkaOperations) ->
-            kafkaOperations.send(OrderTopics.Transaction.ERROR,
+            kafkaOperations.send(OrderTopics.ERROR,
                 orderDto.getId(),
                 orderDto));
 
@@ -89,12 +91,15 @@ public class OrderService {
 
     @Async
     @Scheduled(cron = "*/10 * * * * *")
+    @AuditDisabled
     public void verify() {
         orderRepository.findBadOrders()
             .forEach(order ->
                 kafkaTemplate.executeInTransaction((operations) ->
-                    operations.send(OrderTopics.Transaction.ERROR,
+                    operations.send(OrderTopics.ERROR,
                         order.getId(),
-                        order.setError("TIMEOUT"))));
+                        orderMapper.toDto(
+                            order.setStatus(OrderTopics.Status.ERROR)
+                                .setError("TIMEOUT")))));
     }
 }

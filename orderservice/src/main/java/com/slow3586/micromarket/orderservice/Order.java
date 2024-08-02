@@ -1,18 +1,21 @@
 package com.slow3586.micromarket.orderservice;
 
+import com.slow3586.micromarket.api.order.OrderTopics;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -38,11 +41,13 @@ public class Order {
     @Min(1)
     @Max(999999)
     int quantity;
-    @NotBlank
-    String status;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    OrderTopics.Status status;
     String error;
 
     @NotNull
+    @CreationTimestamp
     Instant createdAt;
     Instant paidAt;
 

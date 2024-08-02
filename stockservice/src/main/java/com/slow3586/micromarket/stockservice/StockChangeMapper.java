@@ -1,7 +1,7 @@
 package com.slow3586.micromarket.stockservice;
 
-import com.slow3586.micromarket.api.mapstruct.BaseMapperConfig;
 import com.slow3586.micromarket.api.mapstruct.BaseMapper;
+import com.slow3586.micromarket.api.mapstruct.BaseMapperConfig;
 import com.slow3586.micromarket.api.stock.StockChangeDto;
 import org.mapstruct.Mapper;
 

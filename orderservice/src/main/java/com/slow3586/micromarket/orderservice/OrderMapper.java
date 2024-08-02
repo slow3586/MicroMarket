@@ -1,8 +1,8 @@
 package com.slow3586.micromarket.orderservice;
 
 import com.slow3586.micromarket.api.delivery.DeliveryDto;
-import com.slow3586.micromarket.api.mapstruct.BaseMapperConfig;
 import com.slow3586.micromarket.api.mapstruct.BaseMapper;
+import com.slow3586.micromarket.api.mapstruct.BaseMapperConfig;
 import com.slow3586.micromarket.api.order.OrderDto;
 import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.user.UserDto;

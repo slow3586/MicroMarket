@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -14,4 +15,5 @@ public class BalanceReplenishDto implements Serializable {
     @NotNull
     UUID userId;
     int value;
+    Instant createdAt;
 }

@@ -27,17 +27,21 @@ public class ProductService {
     UserClient userClient;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @KafkaListener(topics = OrderTopics.Transaction.NEW,
+    @KafkaListener(topics = OrderTopics.CREATED,
         errorHandler = "orderTransactionListenerErrorHandler")
     public void processOrderCreated(OrderDto order) {
+        ProductDto product = productRepository.findById(
+                order.getProduct().getId())
+            .map(productMapper::toDto)
+            .orElseThrow();
+        if (product.getSeller().getId().equals(order.getBuyer().getId())) {
+            throw new IllegalStateException("Нельзя купить свой заказ!");
+        }
         kafkaTemplate.send(
-            OrderTopics.Transaction.PRODUCT,
+            OrderTopics.Initialization.PRODUCT,
             order.getId(),
             order.setProduct(
-                productRepository.findById(
-                        order.getProduct().getId())
-                    .map(productMapper::toDto)
-                    .orElseThrow()));
+                product));
     }
 
     public ProductDto createProduct(CreateProductRequest request) {

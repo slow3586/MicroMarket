@@ -5,8 +5,8 @@ import com.slow3586.micromarket.api.balance.BalanceReplenishDto;
 import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
 import com.slow3586.micromarket.api.balance.CreateBalanceReplenishRequest;
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
+import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.balanceservice.entity.BalanceReplenish;
 import com.slow3586.micromarket.balanceservice.entity.BalanceTransfer;
 import com.slow3586.micromarket.balanceservice.mapper.BalanceReplenishMapper;
@@ -22,13 +22,17 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
+@Transactional(transactionManager = "transactionManager")
 public class BalanceService {
     BalanceReplenishRepository balanceReplenishRepository;
     BalanceReplenishMapper balanceReplenishMapper;
@@ -36,7 +40,6 @@ public class BalanceService {
     BalanceTransferMapper balanceTransferMapper;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @Transactional(transactionManager = "transactionManager")
     public void createBalanceReplenish(final CreateBalanceReplenishRequest request) {
         final BalanceReplenish balanceReplenish = balanceReplenishRepository.save(
             new BalanceReplenish()
@@ -52,33 +55,34 @@ public class BalanceService {
                     balanceReplenishMapper.toDto(balanceReplenish)));
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.STOCK,
+    @KafkaListener(topics = OrderTopics.Initialization.STOCK,
         errorHandler = "orderTransactionListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     protected void processOrderCreated(final OrderDto order) {
         final int total = order.getQuantity() * order.getProduct().getPrice();
+        final long userBalance = getUserBalance(order.getBuyer().getId());
+        final boolean enoughBalance = total <= userBalance;
 
         final BalanceTransfer balanceTransfer =
             balanceTransferRepository.save(
                 new BalanceTransfer()
                     .setValue(total)
-                    .setStatus("AWAITING")
+                    .setStatus(enoughBalance ? "RESERVED" : "AWAITING")
                     .setSenderId(order.getBuyer().getId())
                     .setReceiverId(order.getProduct().getSeller().getId())
                     .setOrderId(order.getId())
                     .setCreatedAt(Instant.now()));
 
-        final BalanceTransferDto balanceTransferDto = balanceTransferMapper.toDto(balanceTransfer);
+        final BalanceTransferDto balanceTransferDto =
+            balanceTransferMapper.toDto(balanceTransfer);
 
         kafkaTemplate.send(
-            OrderTopics.Transaction.Payment.AWAITING,
+            enoughBalance ? OrderTopics.Payment.RESERVED : OrderTopics.Payment.AWAITING,
             order.getId(),
             order.setBalanceTransfer(balanceTransferDto));
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.ERROR,
+    @KafkaListener(topics = OrderTopics.ERROR,
         errorHandler = "loggingKafkaListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     protected void processOrderError(final OrderDto order) {
         balanceTransferRepository.findAllByOrderId(order.getId())
             .forEach(balanceTransfer -> balanceTransfer.setStatus("CANCELLED"));
@@ -86,7 +90,6 @@ public class BalanceService {
 
     @KafkaListener(topics = BalanceTopics.Replenish.NEW,
         errorHandler = "loggingKafkaListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     protected void processBalanceReplenishCreated(final BalanceReplenishDto balanceReplenishDto) {
         balanceTransferRepository.findAllAwaitingByUserId(
             balanceReplenishDto.getUserId()
@@ -97,7 +100,6 @@ public class BalanceService {
 
     @KafkaListener(topics = BalanceTopics.Payment.AWAITING,
         errorHandler = "loggingKafkaListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     protected void processBalanceTransferAwaitingPayment(final BalanceTransferDto balanceTransferDto) {
         final long senderBalance = this.getUserBalance(balanceTransferDto.getSenderId());
 
@@ -121,5 +123,15 @@ public class BalanceService {
         return balanceReplenishRepository.sumAllByUserId(userId)
             + balanceTransferRepository.sumAllPositiveByUserId(userId)
             - balanceTransferRepository.sumAllNegativeByUserId(userId);
+    }
+
+    public List<Serializable> getUserBalanceChanges(UUID userId) {
+        Stream<BalanceReplenishDto> balanceReplenishList = balanceReplenishRepository.findAllByUserId(userId)
+            .stream()
+            .map(balanceReplenishMapper::toDto);
+        Stream<BalanceTransferDto> balanceTransferList = balanceTransferRepository.findAllByUserId(userId)
+            .stream()
+            .map(balanceTransferMapper::toDto);
+        return Stream.concat(balanceReplenishList, balanceTransferList).toList();
     }
 }

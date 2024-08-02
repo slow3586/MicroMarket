@@ -1,8 +1,8 @@
 package com.slow3586.micromarket.stockservice;
 
 
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
+import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.product.ProductClient;
 import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.stock.StockChangeDto;
@@ -47,7 +47,7 @@ public class StockService {
                 .setProductId(request.getProductId()));
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.USER,
+    @KafkaListener(topics = OrderTopics.Initialization.USER,
         errorHandler = "orderTransactionListenerErrorHandler")
     public void processOrderCreated(OrderDto order) {
         final UUID productId = order.getProduct().getId();
@@ -58,7 +58,7 @@ public class StockService {
             .sum();
 
         if (stock < order.getQuantity()) {
-            throw new IllegalStateException("Not enough stock");
+            throw new IllegalStateException("Недостаточно товара");
         }
 
         final StockChangeDto stockChange = this.saveStock(
@@ -69,24 +69,24 @@ public class StockService {
                 .setValue(-order.getQuantity()));
 
         kafkaTemplate.send(
-            OrderTopics.Transaction.STOCK,
+            OrderTopics.Initialization.STOCK,
             order.getId(),
             order.setStockChange(stockChange));
     }
 
-    @KafkaListener(topics = {OrderTopics.Transaction.ERROR},
+    @KafkaListener(topics = {OrderTopics.ERROR},
         errorHandler = "loggingKafkaListenerErrorHandler")
     public void processOrderError(OrderDto order) {
-        stockChangeRepository.findAllByOrderId(order.getId())
+        stockChangeRepository.findByOrderId(order.getId())
             .stream()
             .filter(stockChange -> "ORDER_RESERVED".equals(stockChange.getStatus()))
             .forEach(stockChange -> stockChange.setStatus("ORDER_CANCELLED"));
     }
 
-    @KafkaListener(topics = {OrderTopics.Transaction.Delivery.SENT},
+    @KafkaListener(topics = {OrderTopics.Delivery.SENT},
         errorHandler = "loggingKafkaListenerErrorHandler")
     public void processOrderDeliverySent(OrderDto order) {
-        stockChangeRepository.findAllByOrderId(order.getId())
+        stockChangeRepository.findByOrderId(order.getId())
             .stream()
             .filter(stockChange -> "ORDER_RESERVED".equals(stockChange.getStatus()))
             .forEach(stockChange -> stockChange.setStatus("ORDER_SENT"));
@@ -108,5 +108,11 @@ public class StockService {
 
     public long getProductStock(UUID productId) {
         return stockChangeRepository.sumAllByProductId(productId);
+    }
+
+    public StockChangeDto getStockChangeByOrder(UUID orderId) {
+        return stockChangeRepository.findByOrderId(orderId)
+            .map(stockChangeMapper::toDto)
+            .orElseThrow();
     }
 }

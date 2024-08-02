@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -15,5 +16,5 @@ public interface StockChangeRepository extends JpaRepository<StockChange, UUID> 
     long sumAllByProductId(UUID productId);
 
     List<StockChange> findAllByProductId(UUID productId);
-    List<StockChange> findAllByOrderId(UUID orderId);
+    Optional<StockChange> findByOrderId(UUID orderId);
 }

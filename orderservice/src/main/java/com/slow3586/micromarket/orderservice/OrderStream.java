@@ -5,8 +5,8 @@ import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
 import com.slow3586.micromarket.api.delivery.DeliveryDto;
 import com.slow3586.micromarket.api.delivery.DeliveryTopics;
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
+import com.slow3586.micromarket.api.order.OrderTopics;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,22 +36,22 @@ public class OrderStream {
     @PostConstruct
     public void orderStream() {
         KTable<UUID, OrderDto> orderCreatedTable = streamsBuilder.table(
-            OrderTopics.Transaction.NEW,
+            OrderTopics.CREATED,
             OrderTopics.Utils.CONSUMED);
         KTable<UUID, OrderDto> orderPaymentAwaitingTable = streamsBuilder.table(
-            OrderTopics.Transaction.Payment.AWAITING,
+            OrderTopics.Payment.AWAITING,
             OrderTopics.Utils.CONSUMED);
         KTable<UUID, OrderDto> orderPaymentReservedTable = streamsBuilder.table(
-            OrderTopics.Transaction.Payment.RESERVED,
+            OrderTopics.Payment.RESERVED,
             OrderTopics.Utils.CONSUMED);
         KTable<UUID, OrderDto> orderDeliveryAwaitingTable = streamsBuilder.table(
-            OrderTopics.Transaction.Delivery.AWAITING,
+            OrderTopics.Delivery.AWAITING,
             OrderTopics.Utils.CONSUMED);
         KTable<UUID, OrderDto> orderDeliverySentTable = streamsBuilder.table(
-            OrderTopics.Transaction.Delivery.SENT,
+            OrderTopics.Delivery.SENT,
             OrderTopics.Utils.CONSUMED);
         KTable<UUID, OrderDto> orderDeliveryReceivedTable = streamsBuilder.table(
-            OrderTopics.Transaction.Delivery.RECEIVED,
+            OrderTopics.Delivery.RECEIVED,
             OrderTopics.Utils.CONSUMED);
         KTable<UUID, BalanceTransferDto> balancePaymentReservedTable = streamsBuilder.table(
             BalanceTopics.Payment.RESERVED,
@@ -70,7 +70,7 @@ public class OrderStream {
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("CREATED_TIMEOUT"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
+            .to(OrderTopics.ERROR, OrderTopics.Utils.PRODUCED);
 
         // PAYMENT RECEIVED
         orderPaymentAwaitingTable
@@ -78,7 +78,7 @@ public class OrderStream {
                 order -> order.getBalanceTransfer().getId(),
                 OrderDto::setBalanceTransfer)
             .toStream()
-            .to(OrderTopics.Transaction.Payment.RESERVED, OrderTopics.Utils.PRODUCED);
+            .to(OrderTopics.Payment.RESERVED, OrderTopics.Utils.PRODUCED);
 
         // PAYMENT TIMEOUT
         orderPaymentAwaitingTable
@@ -87,7 +87,7 @@ public class OrderStream {
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("PAYMENT_AWAITING_TIMEOUT"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
+            .to(OrderTopics.ERROR, OrderTopics.Utils.PRODUCED);
 
         // DELIVERY SENT
         orderDeliveryAwaitingTable
@@ -95,7 +95,7 @@ public class OrderStream {
                 order -> order.getDelivery().getId(),
                 (a, b) -> a)
             .toStream()
-            .to(OrderTopics.Transaction.Delivery.SENT, OrderTopics.Utils.PRODUCED);
+            .to(OrderTopics.Delivery.SENT, OrderTopics.Utils.PRODUCED);
 
         // DELIVERY SENT TIMEOUT
         orderDeliveryAwaitingTable
@@ -104,7 +104,7 @@ public class OrderStream {
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("DELIVERY_AWAITING_TIMEOUT"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
+            .to(OrderTopics.ERROR, OrderTopics.Utils.PRODUCED);
 
         // DELIVERY RECEIVED
         orderDeliverySentTable
@@ -112,7 +112,7 @@ public class OrderStream {
                 order -> order.getDelivery().getId(),
                 (a, b) -> a)
             .toStream()
-            .to(OrderTopics.Transaction.Delivery.RECEIVED, OrderTopics.Utils.PRODUCED);
+            .to(OrderTopics.Delivery.RECEIVED, OrderTopics.Utils.PRODUCED);
 
         // DELIVERY RECEIVED TIMEOUT
         orderDeliverySentTable
@@ -121,6 +121,6 @@ public class OrderStream {
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("DELIVERY_SENT_TIMEOUT"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
+            .to(OrderTopics.ERROR, OrderTopics.Utils.PRODUCED);
     }
 }

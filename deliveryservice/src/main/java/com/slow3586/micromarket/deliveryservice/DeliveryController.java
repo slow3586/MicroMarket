@@ -35,19 +35,19 @@ public class DeliveryController implements DeliveryClient {
     }
 
     @PostMapping("update/sent/{deliveryId}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('API')")
     public DeliveryDto updateDeliverySent(@PathVariable UUID deliveryId) {
         return deliveryService.updateDeliverySent(deliveryId);
     }
 
     @PostMapping("update/received/{deliveryId}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('API')")
     public DeliveryDto updateDeliveryReceived(@PathVariable UUID deliveryId) {
         return deliveryService.updateDeliveryReceived(deliveryId);
     }
 
     @PostMapping("update/cancelled/{deliveryId}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('API')")
     public DeliveryDto updateDeliveryCancelled(@PathVariable UUID deliveryId) {
         return deliveryService.updateDeliveryCancelled(deliveryId);
     }

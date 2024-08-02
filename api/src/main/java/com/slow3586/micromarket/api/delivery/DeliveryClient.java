@@ -16,10 +16,10 @@ public interface DeliveryClient {
     DeliveryDto getDelivery(@PathVariable UUID productId);
 
     @PostMapping("update/sent/{deliveryId}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('API')")
     DeliveryDto updateDeliverySent(@PathVariable UUID deliveryId);
 
     @PostMapping("update/received/{deliveryId}")
-    @PreAuthorize("hasAnyAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('API')")
     DeliveryDto updateDeliveryReceived(@PathVariable UUID deliveryId);
 }

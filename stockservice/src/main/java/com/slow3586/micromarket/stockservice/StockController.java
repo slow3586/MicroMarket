@@ -31,6 +31,11 @@ public class StockController implements StockClient {
         return stockService.getProductStock(productId);
     }
 
+    @Override
+    public StockChangeDto getStockChangeByOrder(UUID orderId) {
+        return stockService.getStockChangeByOrder(orderId);
+    }
+
     @PostMapping("update")
     @PreAuthorize("hasAnyAuthority('USER')")
     public StockChangeDto updateStock(@RequestBody @Valid UpdateStockRequest request) {

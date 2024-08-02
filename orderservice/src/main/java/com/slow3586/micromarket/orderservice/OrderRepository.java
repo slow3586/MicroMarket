@@ -10,10 +10,11 @@ import java.util.UUID;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Query(value = """
-        select o from order o\
-        where (o.status = 'NEW' AND o.created_at + INTERVAL '1 minute' < NOW())\
-                or (o.status = 'AWAITING_PAYMENT' AND o.created_at + INTERVAL '15 minutes' < NOW())\
-                or (o.status = 'AWAITING_CONFIRMATION' AND o.created_at + INTERVAL '1 day' < NOW())\
-                order by o.created_at limit 100)""", nativeQuery = true)
+        select * from "order" o \
+        where (o.status = 'INITIALIZATION_AWAITING' AND o.created_at + INTERVAL '1 minute' < NOW()) \
+                or (o.status = 'PAYMENT_AWAITING' AND o.created_at + INTERVAL '15 minutes' < NOW()) \
+                or (o.status = 'CONFIRMATION_AWAITING' AND o.created_at + INTERVAL '1 day' < NOW()) \
+                order by o.created_at limit 100""",
+        nativeQuery = true)
     List<Order> findBadOrders();
 }

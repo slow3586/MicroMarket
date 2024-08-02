@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -14,4 +15,6 @@ public interface BalanceReplenishRepository extends JpaRepository<BalanceRepleni
         select coalesce(sum(b.value), 0) from balance_replenish b
         """)
     long sumAllByUserId(@NotNull UUID userId);
+
+    List<BalanceReplenish> findAllByUserId(UUID userId);
 }

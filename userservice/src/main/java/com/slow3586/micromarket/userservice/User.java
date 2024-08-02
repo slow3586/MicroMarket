@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.userservice;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,6 +30,7 @@ public class User {
     @UuidGenerator
     UUID id;
     @Length(min = 4, max = 16)
+    @Column(unique=true)
     String login;
     @NotBlank
     String password;

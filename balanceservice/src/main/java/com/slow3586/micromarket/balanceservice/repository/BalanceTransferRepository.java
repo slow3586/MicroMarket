@@ -13,14 +13,14 @@ import java.util.UUID;
 public interface BalanceTransferRepository extends JpaRepository<BalanceTransfer, UUID> {
     @Query("""
         select coalesce(sum(b.value), 0) from balance_transfer b
-        where b.senderId = :userId
+        where b.receiverId = :userId
         and b.status = 'COMPLETED'
         """)
     long sumAllPositiveByUserId(@NotNull UUID userId);
     @Query("""
         select coalesce(sum(b.value), 0) from balance_transfer b
-        where b.receiverId = :userId
-        and b.status <> 'AWAITING'
+        where b.senderId = :userId
+        and (b.status = 'RESERVED' or b.status = 'COMPLETED')
         """)
     long sumAllNegativeByUserId(@NotNull UUID userId);
     @Query("""
@@ -31,4 +31,10 @@ public interface BalanceTransferRepository extends JpaRepository<BalanceTransfer
     List<BalanceTransfer> findAllAwaitingByUserId(@NotNull UUID userId);
 
     List<BalanceTransfer> findAllByOrderId(UUID orderId);
+
+    @Query("""
+        select b from balance_transfer b
+        where b.senderId = :userId or b.receiverId = :userId
+        """)
+    List<BalanceTransfer> findAllByUserId(UUID userId);
 }

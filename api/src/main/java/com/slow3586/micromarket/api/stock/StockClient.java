@@ -16,6 +16,9 @@ public interface StockClient {
     @GetMapping("{productId}")
     long getProductStock(@PathVariable UUID productId);
 
+    @GetMapping("order/{orderId}")
+    StockChangeDto getStockChangeByOrder(@PathVariable UUID orderId);
+
     @PostMapping("update")
     StockChangeDto updateStock(@RequestBody @Valid UpdateStockRequest request);
 }

@@ -1,7 +1,7 @@
 package com.slow3586.micromarket.orderservice;
 
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
+import com.slow3586.micromarket.api.order.OrderTopics;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -17,63 +17,58 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
+@Transactional(transactionManager = "transactionManager")
 public class OrderConsumer {
     OrderRepository orderRepository;
     KafkaTemplate<UUID, Object> kafkaTemplate;
     OrderService orderService;
 
-    @KafkaListener(topics = {OrderTopics.Transaction.ERROR},
-        errorHandler = "loggingKafkaListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
-    public void processOrderError(OrderDto order) {
-        orderRepository.findById(order.getId())
-            .map(entity -> order.setStatus("ERROR")
-                .setError(order.getError()))
-            .orElseThrow();
-    }
-
-    @KafkaListener(topics = OrderTopics.Transaction.Payment.AWAITING,
+    @KafkaListener(topics = OrderTopics.Payment.AWAITING,
         errorHandler = "orderTransactionListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     public void processOrderPaymentAwaiting(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("PAYMENT_AWAITING"))
+            .map(o -> o.setStatus(OrderTopics.Status.PAYMENT_AWAITING))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Payment.RESERVED,
+    @KafkaListener(topics = OrderTopics.Payment.RESERVED,
         errorHandler = "orderTransactionListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     public void processOrderPaymentReserved(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("PAYMENT_RESERVED"))
+            .map(o -> o.setStatus(OrderTopics.Status.PAYMENT_RESERVED))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Delivery.AWAITING,
+    @KafkaListener(topics = OrderTopics.Delivery.AWAITING,
         errorHandler = "orderTransactionListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     public void processOrderDeliveryAwaiting(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("DELIVERY_AWAITING"))
+            .map(o -> o.setStatus(OrderTopics.Status.DELIVERY_AWAITING))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Delivery.SENT,
+    @KafkaListener(topics = OrderTopics.Delivery.SENT,
         errorHandler = "orderTransactionListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     public void processOrderDeliverySent(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("DELIVERY_SENT"))
+            .map(o -> o.setStatus(OrderTopics.Status.DELIVERY_SENT))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Delivery.RECEIVED,
+    @KafkaListener(topics = OrderTopics.Delivery.RECEIVED,
         errorHandler = "orderTransactionListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
     public void processOrderDeliveryReceived(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("DELIVERY_RECEIVED"))
+            .map(o -> o.setStatus(OrderTopics.Status.DELIVERY_RECEIVED))
+            .orElseThrow();
+    }
+
+    @KafkaListener(topics = {OrderTopics.ERROR},
+        errorHandler = "loggingKafkaListenerErrorHandler")
+    public void processOrderError(OrderDto order) {
+        orderRepository.findById(order.getId())
+            .map(entity -> order.setStatus(OrderTopics.Status.ERROR)
+                .setError(order.getError()))
             .orElseThrow();
     }
 }

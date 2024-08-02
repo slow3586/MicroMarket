@@ -41,6 +41,12 @@ public class AuditAspect {
     @Pointcut("within(com.slow3586.micromarket..*)")
     public void app() {}
 
+    @Pointcut("@annotation(com.slow3586.micromarket.api.audit.AuditDisabled)")
+    public void auditDisabled() {}
+
+    @Pointcut("@annotation(org.springframework.scheduling.annotation.Scheduled)")
+    public void scheduled() {}
+
     @Pointcut("@within(org.springframework.stereotype.Component)")
     public void component() {}
 
@@ -50,10 +56,13 @@ public class AuditAspect {
     @Pointcut("@within(org.springframework.web.bind.annotation.RestController)")
     public void restController() {}
 
-    @Pointcut("execution(* org.apache.kafka.streams.kstream.internals.KStreamImpl.*(..))")
-    public void kafkaStreams() {}
+    @Pointcut("execution(* org.springframework.kafka.core.KafkaTemplate.send(..))")
+    public void kafkaTemplate() {}
 
-    @Around("app() && (service() || restController())")
+    @Pointcut("execution(* org.springframework.jdbc.core.JdbcTemplate.*(..))")
+    public void jdbcTemplate() {}
+
+    @Around("app() && !auditDisabled() && !scheduled() && (service() || restController()) || kafkaTemplate()")
     protected Object joinPoint(@NonNull ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         final Instant start = Instant.now();
         final TraceContext context = tracer == null ? null : tracer.currentTraceContext().context();
@@ -81,7 +90,7 @@ public class AuditAspect {
                 .exceptionStack(StringUtils.substring(
                     Arrays.toString(exception.getStackTrace()),
                     0,
-                    8000).replaceAll(", ", ",\n"));
+                    8000).replaceAll(", ", "," + System.lineSeparator()));
             throw exception;
         } finally {
             final Instant end = Instant.now();
