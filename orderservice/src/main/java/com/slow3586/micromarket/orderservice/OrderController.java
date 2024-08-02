@@ -35,7 +35,7 @@ public class OrderController implements OrderClient {
 
     @PostMapping("create")
     @PreAuthorize("hasAnyAuthority('USER')")
-    public UUID createOrder(@RequestBody @Valid CreateOrderRequest request) {
+    public OrderDto createOrder(@RequestBody @Valid CreateOrderRequest request) {
         return orderService.createOrder(request);
     }
 

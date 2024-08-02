@@ -81,7 +81,7 @@ public class AuditAspect {
                 .exceptionStack(StringUtils.substring(
                     Arrays.toString(exception.getStackTrace()),
                     0,
-                    8000));
+                    8000).replaceAll(", ", ",\n"));
             throw exception;
         } finally {
             final Instant end = Instant.now();

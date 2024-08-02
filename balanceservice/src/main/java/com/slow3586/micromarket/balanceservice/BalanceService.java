@@ -4,7 +4,7 @@ package com.slow3586.micromarket.balanceservice;
 import com.slow3586.micromarket.api.balance.BalanceReplenishDto;
 import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
-import com.slow3586.micromarket.api.balance.ReplenishBalanceRequest;
+import com.slow3586.micromarket.api.balance.CreateBalanceReplenishRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
 import com.slow3586.micromarket.balanceservice.entity.BalanceReplenish;
@@ -37,10 +37,11 @@ public class BalanceService {
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
     @Transactional(transactionManager = "transactionManager")
-    public void replenishBalance(final ReplenishBalanceRequest request) {
+    public void createBalanceReplenish(final CreateBalanceReplenishRequest request) {
         final BalanceReplenish balanceReplenish = balanceReplenishRepository.save(
             new BalanceReplenish()
                 .setUserId(request.getUserId())
+                .setCreatedAt(Instant.now())
                 .setValue(request.getValue()));
 
         kafkaTemplate.executeInTransaction(
@@ -54,7 +55,7 @@ public class BalanceService {
     @KafkaListener(topics = OrderTopics.Transaction.STOCK,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    protected void processNewOrder(final OrderDto order) {
+    protected void processOrderCreated(final OrderDto order) {
         final int total = order.getQuantity() * order.getProduct().getPrice();
 
         final BalanceTransfer balanceTransfer =
@@ -62,21 +63,31 @@ public class BalanceService {
                 new BalanceTransfer()
                     .setValue(total)
                     .setStatus("AWAITING")
+                    .setSenderId(order.getBuyer().getId())
+                    .setReceiverId(order.getProduct().getSeller().getId())
                     .setOrderId(order.getId())
                     .setCreatedAt(Instant.now()));
 
         final BalanceTransferDto balanceTransferDto = balanceTransferMapper.toDto(balanceTransfer);
 
         kafkaTemplate.send(
-            OrderTopics.Transaction.Awaiting.PAYMENT,
+            OrderTopics.Transaction.Payment.AWAITING,
             order.getId(),
             order.setBalanceTransfer(balanceTransferDto));
+    }
+
+    @KafkaListener(topics = OrderTopics.Transaction.ERROR,
+        errorHandler = "loggingKafkaListenerErrorHandler")
+    @Transactional(transactionManager = "transactionManager")
+    protected void processOrderError(final OrderDto order) {
+        balanceTransferRepository.findAllByOrderId(order.getId())
+            .forEach(balanceTransfer -> balanceTransfer.setStatus("CANCELLED"));
     }
 
     @KafkaListener(topics = BalanceTopics.Replenish.NEW,
         errorHandler = "loggingKafkaListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    protected void processNewBalanceReplenish(final BalanceReplenishDto balanceReplenishDto) {
+    protected void processBalanceReplenishCreated(final BalanceReplenishDto balanceReplenishDto) {
         balanceTransferRepository.findAllAwaitingByUserId(
             balanceReplenishDto.getUserId()
         ).forEach(balanceTransfer ->
@@ -84,7 +95,7 @@ public class BalanceService {
                 balanceTransferMapper.toDto(balanceTransfer)));
     }
 
-    @KafkaListener(topics = BalanceTopics.Transfer.AWAITING,
+    @KafkaListener(topics = BalanceTopics.Payment.AWAITING,
         errorHandler = "loggingKafkaListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
     protected void processBalanceTransferAwaitingPayment(final BalanceTransferDto balanceTransferDto) {
@@ -100,7 +111,7 @@ public class BalanceService {
                     .orElseThrow();
 
             kafkaTemplate.send(
-                BalanceTopics.Transfer.RESERVED,
+                BalanceTopics.Payment.RESERVED,
                 balanceTransfer.getId(),
                 balanceTransfer);
         }

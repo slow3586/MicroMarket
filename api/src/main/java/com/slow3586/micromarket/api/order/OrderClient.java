@@ -17,5 +17,5 @@ public interface OrderClient {
     OrderDto getOrder(@PathVariable UUID orderId);
 
     @PostMapping("create")
-    UUID createOrder(@RequestBody @Valid CreateOrderRequest createOrderRequest);
+    OrderDto createOrder(@RequestBody @Valid CreateOrderRequest createOrderRequest);
 }

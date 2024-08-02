@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,8 @@ public class StockChange {
     UUID orderId;
     @NotNull
     int value;
+    @NotBlank
+    String status;
 
     @Override
     public final boolean equals(Object o) {

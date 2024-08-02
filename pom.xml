@@ -20,6 +20,7 @@
         <module>productservice</module>
         <module>stockservice</module>
         <module>userservice</module>
+        <module>deliveryservice</module>
     </modules>
     <url/>
     <licenses>

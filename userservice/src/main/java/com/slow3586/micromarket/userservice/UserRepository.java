@@ -1,6 +1,5 @@
-package com.slow3586.micromarket.userservice.repository;
+package com.slow3586.micromarket.userservice;
 
-import com.slow3586.micromarket.userservice.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

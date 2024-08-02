@@ -27,34 +27,53 @@ public class OrderConsumer {
     @Transactional(transactionManager = "transactionManager")
     public void processOrderError(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("ERROR"))
+            .map(entity -> order.setStatus("ERROR")
+                .setError(order.getError()))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Awaiting.PAYMENT,
+    @KafkaListener(topics = OrderTopics.Transaction.Payment.AWAITING,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    public void processOrderAwaitingPayment(OrderDto order) {
+    public void processOrderPaymentAwaiting(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("AWAITING_BALANCE"))
+            .map(o -> o.setStatus("PAYMENT_AWAITING"))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Awaiting.DELIVERY,
+    @KafkaListener(topics = OrderTopics.Transaction.Payment.RESERVED,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    public void processOrderAwaitingConfirmation(OrderDto order) {
+    public void processOrderPaymentReserved(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("AWAITING_DELIVERY"))
+            .map(o -> o.setStatus("PAYMENT_RESERVED"))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.DELIVERY,
+    @KafkaListener(topics = OrderTopics.Transaction.Delivery.AWAITING,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    public void processOrderConfirmation(OrderDto order) {
+    public void processOrderDeliveryAwaiting(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("COMPLETED"))
+            .map(o -> o.setStatus("DELIVERY_AWAITING"))
+            .orElseThrow();
+    }
+
+    @KafkaListener(topics = OrderTopics.Transaction.Delivery.SENT,
+        errorHandler = "orderTransactionListenerErrorHandler")
+    @Transactional(transactionManager = "transactionManager")
+    public void processOrderDeliverySent(OrderDto order) {
+        orderRepository.findById(order.getId())
+            .map(o -> o.setStatus("DELIVERY_SENT"))
+            .orElseThrow();
+    }
+
+    @KafkaListener(topics = OrderTopics.Transaction.Delivery.RECEIVED,
+        errorHandler = "orderTransactionListenerErrorHandler")
+    @Transactional(transactionManager = "transactionManager")
+    public void processOrderDeliveryReceived(OrderDto order) {
+        orderRepository.findById(order.getId())
+            .map(o -> o.setStatus("DELIVERY_RECEIVED"))
             .orElseThrow();
     }
 }

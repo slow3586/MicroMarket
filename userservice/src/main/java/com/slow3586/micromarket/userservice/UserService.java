@@ -6,8 +6,6 @@ import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.user.LoginRequest;
 import com.slow3586.micromarket.api.user.RegisterUserRequest;
 import com.slow3586.micromarket.api.user.UserDto;
-import com.slow3586.micromarket.userservice.entity.User;
-import com.slow3586.micromarket.userservice.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.AccessLevel;
@@ -43,16 +41,17 @@ public class UserService {
 
     @KafkaListener(topics = OrderTopics.Transaction.PRODUCT,
         errorHandler = "orderTransactionListenerErrorHandler")
-    public void processNewOrder(OrderDto order) {
+    public void processOrderCreated(OrderDto order) {
         kafkaTemplate.send(
             OrderTopics.Transaction.USER,
             order.getId(),
             order.setBuyer(userRepository.findById(order.getBuyer().getId())
                     .map(userMapper::toDto)
                     .orElseThrow())
-                .setSeller(userRepository.findById(order.getProduct().getSellerId())
-                    .map(userMapper::toDto)
-                    .orElseThrow()));
+                .setProduct(order.getProduct().setSeller(
+                    userRepository.findById(order.getProduct().getSeller().getId())
+                        .map(userMapper::toDto)
+                        .orElseThrow())));
     }
 
     public UserDto registerUser(RegisterUserRequest request) {

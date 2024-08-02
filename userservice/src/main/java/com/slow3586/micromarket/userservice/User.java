@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.userservice.entity;
+package com.slow3586.micromarket.userservice;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

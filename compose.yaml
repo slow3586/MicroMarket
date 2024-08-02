@@ -68,6 +68,8 @@ services:
         condition: service_healthy
       userservice:
         condition: service_healthy
+      deliveryservice:
+        condition: service_healthy
     logging: *logging
     ports: [ "8080:80" ]
     volumes:
@@ -132,7 +134,18 @@ services:
 
   userservicedb:
     <<: *postgres-conf
-    ports: [ "5444:5432" ]
+
+  deliveryservice:
+    build: ./deliveryservice
+    depends_on:
+      deliveryservicedb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    <<: *spring-conf
+
+  deliveryservicedb:
+    <<: *postgres-conf
 
   kafka:
     image: confluentinc/cp-kafka:7.5.5
@@ -155,6 +168,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: "-Xms128m -Xmx512m"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
     healthcheck:
       test: "nc -z kafka 9091 || exit 1"
       <<: *healthcheck

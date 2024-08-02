@@ -4,6 +4,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +32,17 @@ public class BalanceTransfer {
     @UuidGenerator
     UUID id;
     @NotNull
+    UUID senderId;
+    @NotNull
+    UUID receiverId;
+    @NotNull
     UUID orderId;
+    @Min(1)
+    @Max(999999)
     int value;
+    @NotBlank
     String status;
+    @NotNull
     Instant createdAt;
 
     @Override

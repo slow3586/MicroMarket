@@ -5,8 +5,11 @@
             <pattern>%d{dd-MM-yy HH:mm:ss.SSS} %level %logger{0}: %msg%n</pattern>
         </encoder>
     </appender>
+    <logger name="com.slow3586.micromarket" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

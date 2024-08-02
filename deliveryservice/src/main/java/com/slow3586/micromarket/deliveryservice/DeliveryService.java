@@ -23,13 +23,13 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
+@Transactional(transactionManager = "transactionManager")
 public class DeliveryService {
     DeliveryRepository deliveryRepository;
     DeliveryMapper deliveryMapper;
     OrderClient orderClient;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @Transactional
     public DeliveryDto updateDeliverySent(UUID deliveryId) {
         final Delivery delivery = updateDeliveryInternal(deliveryId);
 
@@ -43,7 +43,6 @@ public class DeliveryService {
                     .setSentAt(Instant.now())));
     }
 
-    @Transactional
     public DeliveryDto updateDeliveryReceived(UUID deliveryId) {
         final Delivery delivery = updateDeliveryInternal(deliveryId);
 
@@ -57,7 +56,6 @@ public class DeliveryService {
                     .setReceivedAt(Instant.now())));
     }
 
-    @Transactional
     public DeliveryDto updateDeliveryCancelled(UUID deliveryId) {
         final Delivery delivery = updateDeliveryInternal(deliveryId);
 
@@ -76,17 +74,16 @@ public class DeliveryService {
         final Delivery delivery = deliveryRepository.findById(deliveryId).orElseThrow();
         final OrderDto order = orderClient.getOrder(delivery.getOrderId());
 
-        if (!userId.equals(order.getProduct().getSellerId())) {
+        if (!userId.equals(order.getProduct().getSeller().getId())) {
             throw new AccessDeniedException("У пользователя нет доступа к этой доставке!");
         }
 
         return delivery;
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.PAYMENT,
+    @KafkaListener(topics = OrderTopics.Transaction.Payment.RESERVED,
         errorHandler = "orderTransactionListenerErrorHandler")
-    @Transactional(transactionManager = "transactionManager")
-    public void processNewOrder(OrderDto order) {
+    public void processOrderPaymentReserved(OrderDto order) {
         final Delivery delivery = deliveryRepository.save(
             new Delivery()
                 .setCreatedAt(Instant.now())
@@ -94,13 +91,19 @@ public class DeliveryService {
                 .setOrderId(order.getId()));
 
         kafkaTemplate.send(
-            OrderTopics.Transaction.Awaiting.DELIVERY,
+            OrderTopics.Transaction.Delivery.AWAITING,
             order.getId(),
             order.setDelivery(deliveryMapper.toDto(delivery)));
     }
 
     public DeliveryDto getDelivery(UUID deliveryId) {
         return deliveryRepository.findById(deliveryId)
+            .map(deliveryMapper::toDto)
+            .orElseThrow();
+    }
+
+    public DeliveryDto getDeliveryByOrder(UUID orderId) {
+        return deliveryRepository.findByOrderId(orderId)
             .map(deliveryMapper::toDto)
             .orElseThrow();
     }

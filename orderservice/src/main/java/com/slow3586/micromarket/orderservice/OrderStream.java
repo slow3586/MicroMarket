@@ -3,6 +3,8 @@ package com.slow3586.micromarket.orderservice;
 
 import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
+import com.slow3586.micromarket.api.delivery.DeliveryDto;
+import com.slow3586.micromarket.api.delivery.DeliveryTopics;
 import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
 import jakarta.annotation.PostConstruct;
@@ -10,16 +12,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Suppressed;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -29,7 +27,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
-@DependsOn({"orderConfig", "balanceConfig"})
+@DependsOn({"orderTopics", "balanceTopics"})
 public class OrderStream {
     OrderRepository orderRepository;
     KafkaTemplate<UUID, Object> kafkaTemplate;
@@ -37,83 +35,92 @@ public class OrderStream {
 
     @PostConstruct
     public void orderStream() {
-        JsonSerde<OrderDto> orderTransactionSerde = new JsonSerde<>(OrderDto.class);
-        JsonSerde<BalanceTransferDto> balanceTransferDtoJsonSerde = new JsonSerde<>(BalanceTransferDto.class);
-
-        Consumed<UUID, OrderDto> orderTransactionConsumed =
-            Consumed.with(Serdes.UUID(), orderTransactionSerde);
-        Consumed<UUID, BalanceTransferDto> balanceTransferConsumed =
-            Consumed.with(Serdes.UUID(), balanceTransferDtoJsonSerde);
-        Produced<UUID, OrderDto> orderTransactionProduced =
-            Produced.with(Serdes.UUID(), orderTransactionSerde);
-
-        KTable<UUID, OrderDto> orderNewTable = streamsBuilder.table(
+        KTable<UUID, OrderDto> orderCreatedTable = streamsBuilder.table(
             OrderTopics.Transaction.NEW,
-            orderTransactionConsumed);
-        KTable<UUID, OrderDto> orderWithUserTable = streamsBuilder.table(
-            OrderTopics.Transaction.USER,
-            orderTransactionConsumed);
-        KTable<UUID, OrderDto> orderWithProductTable = streamsBuilder.table(
-            OrderTopics.Transaction.PRODUCT,
-            orderTransactionConsumed);
-        KTable<UUID, OrderDto> orderWithStockTable = streamsBuilder.table(
-            OrderTopics.Transaction.STOCK,
-            orderTransactionConsumed);
-        KTable<UUID, OrderDto> orderAwaitingBalanceTable = streamsBuilder.table(
-            OrderTopics.Transaction.Awaiting.PAYMENT,
-            orderTransactionConsumed);
-        KTable<UUID, OrderDto> orderWithBalanceTable = streamsBuilder.table(
-            OrderTopics.Transaction.PAYMENT,
-            orderTransactionConsumed);
-        KTable<UUID, OrderDto> orderAwaitingConfirmationTable = streamsBuilder.table(
-            OrderTopics.Transaction.Awaiting.DELIVERY,
-            orderTransactionConsumed);
-        KTable<UUID, OrderDto> orderWithConfirmationTable = streamsBuilder.table(
-            OrderTopics.Transaction.DELIVERY,
-            orderTransactionConsumed);
-        KTable<UUID, BalanceTransferDto> balanceTransferReservedTable = streamsBuilder.table(
-            BalanceTopics.Transfer.RESERVED,
-            balanceTransferConsumed);
+            OrderTopics.Utils.CONSUMED);
+        KTable<UUID, OrderDto> orderPaymentAwaitingTable = streamsBuilder.table(
+            OrderTopics.Transaction.Payment.AWAITING,
+            OrderTopics.Utils.CONSUMED);
+        KTable<UUID, OrderDto> orderPaymentReservedTable = streamsBuilder.table(
+            OrderTopics.Transaction.Payment.RESERVED,
+            OrderTopics.Utils.CONSUMED);
+        KTable<UUID, OrderDto> orderDeliveryAwaitingTable = streamsBuilder.table(
+            OrderTopics.Transaction.Delivery.AWAITING,
+            OrderTopics.Utils.CONSUMED);
+        KTable<UUID, OrderDto> orderDeliverySentTable = streamsBuilder.table(
+            OrderTopics.Transaction.Delivery.SENT,
+            OrderTopics.Utils.CONSUMED);
+        KTable<UUID, OrderDto> orderDeliveryReceivedTable = streamsBuilder.table(
+            OrderTopics.Transaction.Delivery.RECEIVED,
+            OrderTopics.Utils.CONSUMED);
+        KTable<UUID, BalanceTransferDto> balancePaymentReservedTable = streamsBuilder.table(
+            BalanceTopics.Payment.RESERVED,
+            BalanceTopics.Payment.Utils.CONSUMED);
+        KTable<UUID, DeliveryDto> deliverySentTable = streamsBuilder.table(
+            DeliveryTopics.Status.SENT,
+            DeliveryTopics.Utils.CONSUMED);
+        KTable<UUID, DeliveryDto> deliveryReceivedTable = streamsBuilder.table(
+            DeliveryTopics.Status.RECEIVED,
+            DeliveryTopics.Utils.CONSUMED);
 
         // NEW TIMEOUT
-        orderNewTable
+        orderCreatedTable
             .suppress(Suppressed.untilTimeLimit(Duration.ofSeconds(10), null))
-            .leftJoin(orderAwaitingBalanceTable, KeyValue::new)
+            .leftJoin(orderPaymentAwaitingTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
-            .mapValues(v -> v.key.setError("TIMEOUT_NEW"))
+            .mapValues(v -> v.key.setError("CREATED_TIMEOUT"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR, orderTransactionProduced);
+            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
 
-        // BALANCE RECEIVED
-        balanceTransferReservedTable
-            .join(orderAwaitingBalanceTable,
-                BalanceTransferDto::getOrderId,
-                (a, b) -> b.setBalanceTransfer(a))
+        // PAYMENT RECEIVED
+        orderPaymentAwaitingTable
+            .join(balancePaymentReservedTable,
+                order -> order.getBalanceTransfer().getId(),
+                OrderDto::setBalanceTransfer)
             .toStream()
-            .to(OrderTopics.Transaction.PAYMENT, orderTransactionProduced);
+            .to(OrderTopics.Transaction.Payment.RESERVED, OrderTopics.Utils.PRODUCED);
 
         // PAYMENT TIMEOUT
-        orderAwaitingBalanceTable
+        orderPaymentAwaitingTable
             .suppress(Suppressed.untilTimeLimit(Duration.ofMinutes(1), null))
-            .leftJoin(orderWithBalanceTable, KeyValue::new)
+            .leftJoin(orderPaymentReservedTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
-            .mapValues(v -> v.key.setError("TIMEOUT_BALANCE"))
+            .mapValues(v -> v.key.setError("PAYMENT_AWAITING_TIMEOUT"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR, orderTransactionProduced);
+            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
 
-        // CONFIRM RECEIVED
-        orderAwaitingConfirmationTable
-            .join(orderWithConfirmationTable, (a, b) -> a)
+        // DELIVERY SENT
+        orderDeliveryAwaitingTable
+            .join(deliverySentTable,
+                order -> order.getDelivery().getId(),
+                (a, b) -> a)
             .toStream()
-            .to(OrderTopics.Transaction.DELIVERY, orderTransactionProduced);
+            .to(OrderTopics.Transaction.Delivery.SENT, OrderTopics.Utils.PRODUCED);
 
-        // CONFIRM TIMEOUT
-        orderAwaitingConfirmationTable
+        // DELIVERY SENT TIMEOUT
+        orderDeliveryAwaitingTable
             .suppress(Suppressed.untilTimeLimit(Duration.ofDays(1), null))
-            .leftJoin(orderWithConfirmationTable, KeyValue::new)
+            .leftJoin(orderDeliverySentTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
-            .mapValues(v -> v.key.setError("TIMEOUT_CONFIRMATION"))
+            .mapValues(v -> v.key.setError("DELIVERY_AWAITING_TIMEOUT"))
             .toStream()
-            .to(OrderTopics.Transaction.ERROR, orderTransactionProduced);
+            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
+
+        // DELIVERY RECEIVED
+        orderDeliverySentTable
+            .join(deliveryReceivedTable,
+                order -> order.getDelivery().getId(),
+                (a, b) -> a)
+            .toStream()
+            .to(OrderTopics.Transaction.Delivery.RECEIVED, OrderTopics.Utils.PRODUCED);
+
+        // DELIVERY RECEIVED TIMEOUT
+        orderDeliverySentTable
+            .suppress(Suppressed.untilTimeLimit(Duration.ofDays(30), null))
+            .leftJoin(orderDeliveryReceivedTable, KeyValue::new)
+            .filter((k, v) -> v.value == null)
+            .mapValues(v -> v.key.setError("DELIVERY_SENT_TIMEOUT"))
+            .toStream()
+            .to(OrderTopics.Transaction.ERROR, OrderTopics.Utils.PRODUCED);
     }
 }

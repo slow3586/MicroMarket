@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.orderservice;
 
+import com.slow3586.micromarket.api.delivery.DeliveryDto;
 import com.slow3586.micromarket.api.mapstruct.BaseMapperConfig;
 import com.slow3586.micromarket.api.mapstruct.BaseMapper;
 import com.slow3586.micromarket.api.order.OrderDto;
@@ -19,4 +20,5 @@ public interface OrderMapper extends BaseMapper<OrderDto, Order> {
 
     UserDto toUserDto(UUID id);
     ProductDto toProductDto(UUID id);
+    DeliveryDto toDeliveryDto(UUID id);
 }

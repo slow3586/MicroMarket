@@ -2,7 +2,7 @@ package com.slow3586.micromarket.balanceservice;
 
 
 import com.slow3586.micromarket.api.balance.BalanceClient;
-import com.slow3586.micromarket.api.balance.ReplenishBalanceRequest;
+import com.slow3586.micromarket.api.balance.CreateBalanceReplenishRequest;
 import com.slow3586.micromarket.api.utils.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -30,9 +30,9 @@ public class BalanceController implements BalanceClient {
         return balanceService.getUserBalance(SecurityUtils.getPrincipalId());
     }
 
-    @PostMapping("add")
+    @PostMapping("replenish/create")
     @PreAuthorize("hasAnyAuthority('API')")
-    public void addBalance(@RequestBody @Valid ReplenishBalanceRequest request) {
-        balanceService.replenishBalance(request);
+    public void createReplenishBalance(@RequestBody @Valid CreateBalanceReplenishRequest request) {
+        balanceService.createBalanceReplenish(request);
     }
 }

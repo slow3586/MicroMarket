@@ -28,6 +28,12 @@ public class DeliveryController implements DeliveryClient {
         return deliveryService.getDelivery(deliveryId);
     }
 
+    @GetMapping("order/{orderId}")
+    @PreAuthorize("isAuthenticated()")
+    public DeliveryDto getDeliveryByOrder(@PathVariable UUID orderId) {
+        return deliveryService.getDeliveryByOrder(orderId);
+    }
+
     @PostMapping("update/sent/{deliveryId}")
     @PreAuthorize("hasAnyAuthority('USER')")
     public DeliveryDto updateDeliverySent(@PathVariable UUID deliveryId) {
@@ -40,7 +46,7 @@ public class DeliveryController implements DeliveryClient {
         return deliveryService.updateDeliveryReceived(deliveryId);
     }
 
-    @PostMapping("update/received/{deliveryId}")
+    @PostMapping("update/cancelled/{deliveryId}")
     @PreAuthorize("hasAnyAuthority('USER')")
     public DeliveryDto updateDeliveryCancelled(@PathVariable UUID deliveryId) {
         return deliveryService.updateDeliveryCancelled(deliveryId);

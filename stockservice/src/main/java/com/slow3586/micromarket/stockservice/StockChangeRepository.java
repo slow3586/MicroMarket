@@ -15,4 +15,5 @@ public interface StockChangeRepository extends JpaRepository<StockChange, UUID> 
     long sumAllByProductId(UUID productId);
 
     List<StockChange> findAllByProductId(UUID productId);
+    List<StockChange> findAllByOrderId(UUID orderId);
 }

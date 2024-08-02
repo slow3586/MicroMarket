@@ -14,5 +14,5 @@ public interface BalanceClient {
     long getCurrentUserBalance();
 
     @PostMapping("add")
-    void addBalance(@RequestBody @Valid ReplenishBalanceRequest request);
+    void createReplenishBalance(@RequestBody @Valid CreateBalanceReplenishRequest request);
 }

@@ -23,7 +23,6 @@ public class OrderDto implements Serializable {
     String error;
     Instant createdAt;
 
-    UserDto seller;
     StockChangeDto stockChange;
     BalanceTransferDto balanceTransfer;
     DeliveryDto delivery;

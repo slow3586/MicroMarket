@@ -30,7 +30,7 @@ public class ProductController implements ProductClient {
     @GetMapping("{productId}")
     @PreAuthorize("isAuthenticated()")
     public ProductDto getProduct(@PathVariable UUID productId) {
-        return productService.findProductById(productId);
+        return productService.getProduct(productId);
     }
 
     @PostMapping("create")

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: 'stockservice'
+    name: 'deliveryservice'
   main:
     banner-mode: 'off'
   datasource:

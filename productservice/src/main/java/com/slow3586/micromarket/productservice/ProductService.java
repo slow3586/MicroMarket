@@ -5,6 +5,7 @@ import com.slow3586.micromarket.api.order.OrderDto;
 import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.product.CreateProductRequest;
 import com.slow3586.micromarket.api.product.ProductDto;
+import com.slow3586.micromarket.api.user.UserClient;
 import com.slow3586.micromarket.api.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +24,12 @@ import java.util.UUID;
 public class ProductService {
     ProductRepository productRepository;
     ProductMapper productMapper;
+    UserClient userClient;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
     @KafkaListener(topics = OrderTopics.Transaction.NEW,
         errorHandler = "orderTransactionListenerErrorHandler")
-    public OrderDto processNewOrder(OrderDto order) {
+    public void processOrderCreated(OrderDto order) {
         kafkaTemplate.send(
             OrderTopics.Transaction.PRODUCT,
             order.getId(),
@@ -47,7 +49,7 @@ public class ProductService {
                     .setPrice(request.getPrice())));
     }
 
-    public ProductDto findProductById(UUID productId) {
+    public ProductDto getProduct(UUID productId) {
         return productRepository.findById(productId)
             .map(productMapper::toDto)
             .orElseThrow();

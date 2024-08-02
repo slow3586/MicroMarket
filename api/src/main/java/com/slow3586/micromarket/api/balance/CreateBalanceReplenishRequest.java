@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
-public class ReplenishBalanceRequest {
+public class CreateBalanceReplenishRequest {
     UUID userId;
     int value;
 }

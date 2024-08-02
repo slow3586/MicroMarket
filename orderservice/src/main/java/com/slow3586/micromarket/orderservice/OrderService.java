@@ -1,6 +1,7 @@
 package com.slow3586.micromarket.orderservice;
 
 
+import com.slow3586.micromarket.api.delivery.DeliveryClient;
 import com.slow3586.micromarket.api.order.CreateOrderRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.order.OrderDto;
@@ -32,6 +33,7 @@ public class OrderService {
     KafkaTemplate<UUID, Object> kafkaTemplate;
     ProductClient productClient;
     UserClient userClient;
+    DeliveryClient deliveryClient;
 
     public OrderDto getOrder(UUID orderId) {
         final OrderDto orderDto = orderRepository
@@ -40,14 +42,13 @@ public class OrderService {
             .orElseThrow();
 
         orderDto.setBuyer(userClient.getUser(orderDto.getBuyer().getId()));
-        orderDto.setSeller(userClient.getUser(orderDto.getSeller().getId()));
         orderDto.setProduct(productClient.getProduct(orderDto.getProduct().getId()));
 
         return orderDto;
     }
 
     @Transactional(transactionManager = "transactionManager")
-    public UUID createOrder(CreateOrderRequest request) {
+    public OrderDto createOrder(CreateOrderRequest request) {
         final Order order = orderRepository.save(
             new Order()
                 .setBuyerId(SecurityUtils.getPrincipalId())
@@ -67,20 +68,27 @@ public class OrderService {
                     .setStatus(order.getStatus())
                     .setCreatedAt(Instant.now())));
 
-        return order.getId();
+        return orderMapper.toDto(order);
     }
 
     @Transactional(transactionManager = "transactionManager")
     public OrderDto updateOrderCancelled(UUID orderId) {
-        return orderRepository
+        OrderDto orderDto = orderRepository
             .findById(orderId)
             .map(o -> o.setStatus("CANCELLED"))
             .map(orderMapper::toDto)
             .orElseThrow();
+
+        kafkaTemplate.executeInTransaction((kafkaOperations) ->
+            kafkaOperations.send(OrderTopics.Transaction.ERROR,
+                orderDto.getId(),
+                orderDto));
+
+        return orderDto;
     }
 
     @Async
-    @Scheduled(cron = "* */1 * * * *")
+    @Scheduled(cron = "*/10 * * * * *")
     public void verify() {
         orderRepository.findBadOrders()
             .forEach(order ->

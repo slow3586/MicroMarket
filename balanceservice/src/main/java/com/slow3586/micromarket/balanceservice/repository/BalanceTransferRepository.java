@@ -29,4 +29,6 @@ public interface BalanceTransferRepository extends JpaRepository<BalanceTransfer
         and b.senderId = :userId
         """)
     List<BalanceTransfer> findAllAwaitingByUserId(@NotNull UUID userId);
+
+    List<BalanceTransfer> findAllByOrderId(UUID orderId);
 }
