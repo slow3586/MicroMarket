@@ -27,11 +27,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class OrderApplication {
-    @NonFinal
-    @Value("${spring.application.name}")
-    String applicationName;
-    DefaultKafkaReplyErrorChecker defaultKafkaReplyErrorChecker;
-
     public static void main(String[] args) {
         SpringApplication.run(OrderApplication.class, args);
     }

@@ -1,19 +1,13 @@
 package com.slow3586.micromarket.orderservice;
 
-import com.slow3586.micromarket.api.order.NewOrderRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
-import com.slow3586.micromarket.api.order.OrderTransaction;
-import com.slow3586.micromarket.orderservice.entity.Order;
-import com.slow3586.micromarket.orderservice.repository.OrderItemRepository;
-import com.slow3586.micromarket.orderservice.repository.OrderRepository;
-import jakarta.validation.Valid;
+import com.slow3586.micromarket.api.order.OrderDto;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,43 +19,42 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class OrderConsumer {
     OrderRepository orderRepository;
-    OrderItemRepository orderItemRepository;
     KafkaTemplate<UUID, Object> kafkaTemplate;
     OrderService orderService;
 
     @KafkaListener(topics = {OrderTopics.Transaction.ERROR},
         errorHandler = "loggingKafkaListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    public void processOrderError(OrderTransaction order) {
+    public void processOrderError(OrderDto order) {
         orderRepository.findById(order.getId())
             .map(o -> o.setStatus("ERROR"))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Awaiting.BALANCE,
+    @KafkaListener(topics = OrderTopics.Transaction.Awaiting.PAYMENT,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    public void processOrderAwaitingPayment(OrderTransaction order) {
+    public void processOrderAwaitingPayment(OrderDto order) {
         orderRepository.findById(order.getId())
             .map(o -> o.setStatus("AWAITING_BALANCE"))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.Awaiting.CONFIRMATION,
+    @KafkaListener(topics = OrderTopics.Transaction.Awaiting.DELIVERY,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    public void processOrderAwaitingConfirmation(OrderTransaction order) {
+    public void processOrderAwaitingConfirmation(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("AWAITING_CONFIRMATION"))
+            .map(o -> o.setStatus("AWAITING_DELIVERY"))
             .orElseThrow();
     }
 
-    @KafkaListener(topics = OrderTopics.Transaction.BALANCE,
+    @KafkaListener(topics = OrderTopics.Transaction.DELIVERY,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    public void processOrderConfirmation(OrderTransaction order) {
+    public void processOrderConfirmation(OrderDto order) {
         orderRepository.findById(order.getId())
-            .map(o -> o.setStatus("AWAITING_DELIVERY"))
+            .map(o -> o.setStatus("COMPLETED"))
             .orElseThrow();
     }
 }

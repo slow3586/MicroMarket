@@ -11,5 +11,4 @@ import java.util.UUID;
 public class UserDto implements Serializable {
     UUID id;
     String name;
-    long balance;
 }

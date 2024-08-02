@@ -6,8 +6,7 @@ import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
 import com.slow3586.micromarket.api.balance.ReplenishBalanceRequest;
 import com.slow3586.micromarket.api.order.OrderTopics;
-import com.slow3586.micromarket.api.order.OrderTransaction;
-import com.slow3586.micromarket.api.utils.SecurityUtils;
+import com.slow3586.micromarket.api.order.OrderDto;
 import com.slow3586.micromarket.balanceservice.entity.BalanceReplenish;
 import com.slow3586.micromarket.balanceservice.entity.BalanceTransfer;
 import com.slow3586.micromarket.balanceservice.mapper.BalanceReplenishMapper;
@@ -44,45 +43,34 @@ public class BalanceService {
                 .setUserId(request.getUserId())
                 .setValue(request.getValue()));
 
-        kafkaTemplate.executeInTransaction((kafkaOperations) ->
-            kafkaOperations.send(
-                BalanceTopics.Replenish.NEW,
-                request.getUserId(),
-                balanceReplenish));
+        kafkaTemplate.executeInTransaction(
+            (kafkaOperations) ->
+                kafkaOperations.send(
+                    BalanceTopics.Replenish.NEW,
+                    balanceReplenish.getUserId(),
+                    balanceReplenishMapper.toDto(balanceReplenish)));
     }
 
     @KafkaListener(topics = OrderTopics.Transaction.STOCK,
         errorHandler = "orderTransactionListenerErrorHandler")
     @Transactional(transactionManager = "transactionManager")
-    protected void processNewOrder(final OrderTransaction order) {
-        order.setBuyer(order.getBuyer().setBalance(this.getUserBalance(order.getBuyer().getId())))
-            .setOrderItemList(order.getOrderItemList().stream().map(item -> {
-                final int total = item.getQuantity() * item.getProduct().getPrice();
+    protected void processNewOrder(final OrderDto order) {
+        final int total = order.getQuantity() * order.getProduct().getPrice();
 
-                final BalanceTransfer balanceTransfer =
-                    balanceTransferRepository.save(
-                        new BalanceTransfer()
-                            .setSenderId(order.getBuyer().getId())
-                            .setReceiverId(item.getSeller().getId())
-                            .setValue(total)
-                            .setStatus("AWAITING")
-                            .setOrderId(order.getId())
-                            .setCreatedAt(Instant.now()));
+        final BalanceTransfer balanceTransfer =
+            balanceTransferRepository.save(
+                new BalanceTransfer()
+                    .setValue(total)
+                    .setStatus("AWAITING")
+                    .setOrderId(order.getId())
+                    .setCreatedAt(Instant.now()));
 
-                final BalanceTransferDto balanceTransferDto = balanceTransferMapper.toDto(balanceTransfer);
-
-                kafkaTemplate.send(
-                    BalanceTopics.Transfer.AWAITING,
-                    balanceTransferDto.getId(),
-                    balanceTransferDto);
-
-                return item.setBalanceTransferDto(balanceTransferDto);
-            }).toList());
+        final BalanceTransferDto balanceTransferDto = balanceTransferMapper.toDto(balanceTransfer);
 
         kafkaTemplate.send(
-            OrderTopics.Transaction.Awaiting.BALANCE,
+            OrderTopics.Transaction.Awaiting.PAYMENT,
             order.getId(),
-            order);
+            order.setBalanceTransfer(balanceTransferDto));
     }
 
     @KafkaListener(topics = BalanceTopics.Replenish.NEW,
@@ -103,15 +91,18 @@ public class BalanceService {
         final long senderBalance = this.getUserBalance(balanceTransferDto.getSenderId());
 
         if (senderBalance >= balanceTransferDto.getValue()) {
-            final BalanceTransferDto newBalanceTransfer = balanceTransferRepository
-                .findById(balanceTransferDto.getId())
-                .map(t -> t.setStatus("RESERVED"))
-                .map(balanceTransferMapper::toDto)
-                .orElseThrow();
+            final BalanceTransferDto balanceTransfer =
+                balanceTransferRepository
+                    .findById(balanceTransferDto.getId())
+                    .map(t -> t.setStatus("RESERVED"))
+                    .map(balanceTransferRepository::save)
+                    .map(balanceTransferMapper::toDto)
+                    .orElseThrow();
 
-            kafkaTemplate.send(BalanceTopics.Transfer.RESERVED,
-                newBalanceTransfer.getId(),
-                newBalanceTransfer);
+            kafkaTemplate.send(
+                BalanceTopics.Transfer.RESERVED,
+                balanceTransfer.getId(),
+                balanceTransfer);
         }
     }
 

@@ -1,6 +1,5 @@
 package com.slow3586.micromarket.api.stock;
 
-import feign.Headers;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

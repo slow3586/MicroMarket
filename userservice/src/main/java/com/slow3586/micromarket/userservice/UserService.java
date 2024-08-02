@@ -1,7 +1,8 @@
 package com.slow3586.micromarket.userservice;
 
 
-import com.slow3586.micromarket.api.order.OrderTransaction;
+import com.slow3586.micromarket.api.order.OrderDto;
+import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.user.LoginRequest;
 import com.slow3586.micromarket.api.user.RegisterUserRequest;
 import com.slow3586.micromarket.api.user.UserDto;
@@ -15,6 +16,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,18 +39,20 @@ public class UserService {
     int tokenMinutes;
     PasswordEncoder passwordEncoder;
     SecretKey secretKey;
+    KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    public OrderTransaction processNewOrder(OrderTransaction order) {
-        return order.setBuyer(userRepository.findById(order.getBuyer().getId())
-                .map(userMapper::toDto)
-                .orElseThrow())
-            .setOrderItemList(order.getOrderItemList()
-                .stream()
-                .map(item ->
-                    item.setSeller(userRepository.findById(item.getProduct().getSellerId())
-                        .map(userMapper::toDto)
-                        .orElseThrow()))
-                .toList());
+    @KafkaListener(topics = OrderTopics.Transaction.PRODUCT,
+        errorHandler = "orderTransactionListenerErrorHandler")
+    public void processNewOrder(OrderDto order) {
+        kafkaTemplate.send(
+            OrderTopics.Transaction.USER,
+            order.getId(),
+            order.setBuyer(userRepository.findById(order.getBuyer().getId())
+                    .map(userMapper::toDto)
+                    .orElseThrow())
+                .setSeller(userRepository.findById(order.getProduct().getSellerId())
+                    .map(userMapper::toDto)
+                    .orElseThrow()));
     }
 
     public UserDto registerUser(RegisterUserRequest request) {

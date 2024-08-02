@@ -1,9 +1,9 @@
 package com.slow3586.micromarket.productservice;
 
 
+import com.slow3586.micromarket.api.product.CreateProductRequest;
 import com.slow3586.micromarket.api.product.ProductClient;
 import com.slow3586.micromarket.api.product.ProductDto;
-import com.slow3586.micromarket.api.product.CreateProductRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class ProductController implements ProductClient {
 
     @GetMapping("{productId}")
     @PreAuthorize("isAuthenticated()")
-    public ProductDto findProductById(@PathVariable UUID productId) {
+    public ProductDto getProduct(@PathVariable UUID productId) {
         return productService.findProductById(productId);
     }
 

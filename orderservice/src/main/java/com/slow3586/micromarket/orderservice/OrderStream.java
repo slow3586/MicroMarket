@@ -4,9 +4,7 @@ package com.slow3586.micromarket.orderservice;
 import com.slow3586.micromarket.api.balance.BalanceTopics;
 import com.slow3586.micromarket.api.balance.BalanceTransferDto;
 import com.slow3586.micromarket.api.order.OrderTopics;
-import com.slow3586.micromarket.api.order.OrderTransaction;
-import com.slow3586.micromarket.orderservice.repository.OrderItemRepository;
-import com.slow3586.micromarket.orderservice.repository.OrderRepository;
+import com.slow3586.micromarket.api.order.OrderDto;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -34,45 +32,44 @@ import java.util.UUID;
 @DependsOn({"orderConfig", "balanceConfig"})
 public class OrderStream {
     OrderRepository orderRepository;
-    OrderItemRepository orderItemRepository;
     KafkaTemplate<UUID, Object> kafkaTemplate;
     StreamsBuilder streamsBuilder;
 
     @PostConstruct
     public void orderStream() {
-        JsonSerde<OrderTransaction> orderTransactionSerde = new JsonSerde<>(OrderTransaction.class);
+        JsonSerde<OrderDto> orderTransactionSerde = new JsonSerde<>(OrderDto.class);
         JsonSerde<BalanceTransferDto> balanceTransferDtoJsonSerde = new JsonSerde<>(BalanceTransferDto.class);
 
-        Consumed<UUID, OrderTransaction> orderTransactionConsumed =
+        Consumed<UUID, OrderDto> orderTransactionConsumed =
             Consumed.with(Serdes.UUID(), orderTransactionSerde);
         Consumed<UUID, BalanceTransferDto> balanceTransferConsumed =
             Consumed.with(Serdes.UUID(), balanceTransferDtoJsonSerde);
-        Produced<UUID, OrderTransaction> orderTransactionProduced =
+        Produced<UUID, OrderDto> orderTransactionProduced =
             Produced.with(Serdes.UUID(), orderTransactionSerde);
 
-        KTable<UUID, OrderTransaction> orderNewTable = streamsBuilder.table(
+        KTable<UUID, OrderDto> orderNewTable = streamsBuilder.table(
             OrderTopics.Transaction.NEW,
             orderTransactionConsumed);
-        KTable<UUID, OrderTransaction> orderWithUserTable = streamsBuilder.table(
+        KTable<UUID, OrderDto> orderWithUserTable = streamsBuilder.table(
             OrderTopics.Transaction.USER,
             orderTransactionConsumed);
-        KTable<UUID, OrderTransaction> orderWithProductTable = streamsBuilder.table(
+        KTable<UUID, OrderDto> orderWithProductTable = streamsBuilder.table(
             OrderTopics.Transaction.PRODUCT,
             orderTransactionConsumed);
-        KTable<UUID, OrderTransaction> orderWithStockTable = streamsBuilder.table(
+        KTable<UUID, OrderDto> orderWithStockTable = streamsBuilder.table(
             OrderTopics.Transaction.STOCK,
             orderTransactionConsumed);
-        KTable<UUID, OrderTransaction> orderAwaitingBalanceTable = streamsBuilder.table(
-            OrderTopics.Transaction.Awaiting.BALANCE,
+        KTable<UUID, OrderDto> orderAwaitingBalanceTable = streamsBuilder.table(
+            OrderTopics.Transaction.Awaiting.PAYMENT,
             orderTransactionConsumed);
-        KTable<UUID, OrderTransaction> orderWithBalanceTable = streamsBuilder.table(
-            OrderTopics.Transaction.BALANCE,
+        KTable<UUID, OrderDto> orderWithBalanceTable = streamsBuilder.table(
+            OrderTopics.Transaction.PAYMENT,
             orderTransactionConsumed);
-        KTable<UUID, OrderTransaction> orderAwaitingConfirmationTable = streamsBuilder.table(
-            OrderTopics.Transaction.Awaiting.CONFIRMATION,
+        KTable<UUID, OrderDto> orderAwaitingConfirmationTable = streamsBuilder.table(
+            OrderTopics.Transaction.Awaiting.DELIVERY,
             orderTransactionConsumed);
-        KTable<UUID, OrderTransaction> orderWithConfirmationTable = streamsBuilder.table(
-            OrderTopics.Transaction.CONFIRMATION,
+        KTable<UUID, OrderDto> orderWithConfirmationTable = streamsBuilder.table(
+            OrderTopics.Transaction.DELIVERY,
             orderTransactionConsumed);
         KTable<UUID, BalanceTransferDto> balanceTransferReservedTable = streamsBuilder.table(
             BalanceTopics.Transfer.RESERVED,
@@ -89,17 +86,11 @@ public class OrderStream {
 
         // BALANCE RECEIVED
         balanceTransferReservedTable
-            .join(orderAwaitingBalanceTable, (a) -> {a.Get}, (a, b) ->
-                a.setOrderItemList(a.getOrderItemList()
-                    .stream()
-                    .map(i -> {
-                        if (i.getId() == b.getOrderItemId()) {
-                            return i.setBalanceTransferDto(b);
-                        }
-                        return i;
-                    }).toList()))
+            .join(orderAwaitingBalanceTable,
+                BalanceTransferDto::getOrderId,
+                (a, b) -> b.setBalanceTransfer(a))
             .toStream()
-            .to(OrderTopics.Transaction.BALANCE, orderTransactionProduced);
+            .to(OrderTopics.Transaction.PAYMENT, orderTransactionProduced);
 
         // PAYMENT TIMEOUT
         orderAwaitingBalanceTable
@@ -114,7 +105,7 @@ public class OrderStream {
         orderAwaitingConfirmationTable
             .join(orderWithConfirmationTable, (a, b) -> a)
             .toStream()
-            .to(OrderTopics.Transaction.CONFIRMATION, orderTransactionProduced);
+            .to(OrderTopics.Transaction.DELIVERY, orderTransactionProduced);
 
         // CONFIRM TIMEOUT
         orderAwaitingConfirmationTable

@@ -29,10 +29,6 @@ public class BalanceTransfer {
     @UuidGenerator
     UUID id;
     @NotNull
-    UUID senderId;
-    @NotNull
-    UUID receiverId;
-    @NotNull
     UUID orderId;
     int value;
     String status;

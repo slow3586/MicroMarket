@@ -70,7 +70,6 @@ public class DefaultSecurityWebFilter extends OncePerRequestFilter {
                         AuthorityUtils.createAuthorityList("USER"));
                 }
             }
-            //log.info("request {}: {} - {}", request.getRequestURI(), authorizationHeader, authenticationToken);
         } catch (Exception e) {
             log.error("Unable to authorize", e);
         }

@@ -4,5 +4,5 @@ import org.mapstruct.MapperConfig;
 import org.mapstruct.NullValueCheckStrategy;
 
 @MapperConfig(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-public interface IMapStructConfig {
+public interface BaseMapperConfig {
 }

@@ -6,7 +6,7 @@ CREATE TABLE product
 (
     id        UUID    NOT NULL,
     seller_id UUID,
-    name      TEXT,
+    name      VARCHAR(255),
     price     INTEGER NOT NULL,
     CONSTRAINT pk_product PRIMARY KEY (id)
 );

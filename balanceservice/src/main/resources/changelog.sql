@@ -13,12 +13,10 @@ CREATE TABLE balance_replenish
 
 CREATE TABLE balance_transfer
 (
-    id          UUID    NOT NULL,
-    sender_id   UUID    NOT NULL,
-    receiver_id UUID    NOT NULL,
-    order_id    UUID    NOT NULL,
-    value       INTEGER NOT NULL,
-    status      VARCHAR(255),
-    created_at  TIMESTAMP WITHOUT TIME ZONE,
+    id         UUID    NOT NULL,
+    order_id   UUID    NOT NULL,
+    value      INTEGER NOT NULL,
+    status     VARCHAR(255),
+    created_at TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT pk_balance_transfer PRIMARY KEY (id)
 );

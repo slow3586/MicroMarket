@@ -13,11 +13,7 @@ import java.util.UUID;
 public class BalanceTransferDto implements Serializable {
     UUID id;
     @NotNull
-    UUID senderId;
-    @NotNull
-    UUID receiverId;
-    @NotNull
-    UUID orderItemId;
+    UUID orderId;
     int value;
     String status;
     Instant createdAt;

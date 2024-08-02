@@ -21,7 +21,7 @@ public class OrderTransactionListenerErrorHandler implements ConsumerAwareListen
     ) {
         log.error("#handle", exception);
 
-        OrderTransaction order = (OrderTransaction) message.getPayload();
+        OrderDto order = (OrderDto) message.getPayload();
 
         return MessageBuilder.withPayload(order.setError(exception.getMessage()))
             .setHeader(KafkaHeaders.EXCEPTION_FQCN, exception.getCause().getClass().getSimpleName())

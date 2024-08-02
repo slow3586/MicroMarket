@@ -14,7 +14,7 @@ import java.util.UUID;
     url = "${app.client.product}/api/product")
 public interface ProductClient {
     @GetMapping("{productId}")
-    ProductDto findProductById(@PathVariable UUID productId);
+    ProductDto getProduct(@PathVariable UUID productId);
 
     @PostMapping("create")
     ProductDto createProduct(@RequestBody @Valid CreateProductRequest request);

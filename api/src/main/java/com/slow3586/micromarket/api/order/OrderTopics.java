@@ -9,16 +9,14 @@ public final class OrderTopics {
         public final static String PRODUCT = NAME + TRANSACTION + ".product";
         public final static String USER = NAME + TRANSACTION + ".user";
         public final static String STOCK = NAME + TRANSACTION + ".stock";
-        public final static String BALANCE = NAME + TRANSACTION + ".balance";
-        public final static String CONFIRMATION = NAME + TRANSACTION + ".confirmation";
+        public final static String PAYMENT = NAME + TRANSACTION + ".payment";
         public final static String DELIVERY = NAME + TRANSACTION + ".delivery";
         public final static String COMPLETED = NAME + TRANSACTION + ".completed";
         public final static String ERROR = NAME + TRANSACTION + ".error";
         public static final class Awaiting {
             private static final String AWAITING = ".awaiting";
 
-            public final static String BALANCE = Transaction.BALANCE + AWAITING;
-            public final static String CONFIRMATION = Transaction.CONFIRMATION + AWAITING;
+            public final static String PAYMENT = Transaction.PAYMENT + AWAITING;
             public final static String DELIVERY = Transaction.DELIVERY + AWAITING;
         }
     }

@@ -10,7 +10,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +28,7 @@ public class UserController implements UserClient {
     UserService userService;
 
     @GetMapping("{uuid}")
-    public UserDto findUserById(@PathVariable UUID uuid) {
+    public UserDto getUser(@PathVariable UUID uuid) {
         return userService.findUserById(uuid);
     }
 

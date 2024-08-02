@@ -13,7 +13,5 @@ public class BalanceReplenishDto implements Serializable {
     UUID id;
     @NotNull
     UUID userId;
-    @NotNull
-    UUID orderId;
     int value;
 }

@@ -1,8 +1,9 @@
 package com.slow3586.micromarket.api.order;
 
-import feign.Headers;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -12,6 +13,9 @@ import java.util.UUID;
     value = "order",
     url = "${app.client.order}/api/order")
 public interface OrderClient {
+    @GetMapping("{orderId}")
+    OrderDto getOrder(@PathVariable UUID orderId);
+
     @PostMapping("create")
-    UUID create(@RequestBody @Valid NewOrderRequest newOrderRequest);
+    UUID createOrder(@RequestBody @Valid CreateOrderRequest createOrderRequest);
 }
