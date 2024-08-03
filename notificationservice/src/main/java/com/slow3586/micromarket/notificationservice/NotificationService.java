@@ -1,6 +1,7 @@
 package com.slow3586.micromarket.notificationservice;
 
 
+import com.slow3586.micromarket.api.notification.NotificationDto;
 import com.slow3586.micromarket.api.order.OrderClient;
 import com.slow3586.micromarket.api.order.OrderDto;
 import com.slow3586.micromarket.api.order.OrderTopics;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -65,5 +67,12 @@ public class NotificationService {
             .setUserId(order.getProduct().getSeller().getId())
             .setText("Посылка пришла получателю.")
             .setCreatedAt(Instant.now()));
+    }
+
+    public List<NotificationDto> getUserNotifications(UUID userId) {
+        return notificationRepository.findAllByUserId(userId)
+            .stream()
+            .map(notificationMapper::toDto)
+            .toList();
     }
 }

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: 'deliveryservice'
+    name: 'notificationservice'
   main:
     banner-mode: 'off'
   datasource:

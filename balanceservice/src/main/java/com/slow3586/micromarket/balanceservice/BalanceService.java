@@ -66,7 +66,7 @@ public class BalanceService {
             balanceTransferRepository.save(
                 new BalanceTransfer()
                     .setValue(total)
-                    .setStatus(enoughBalance ? "RESERVED" : "AWAITING")
+                    .setStatus(enoughBalance ? BalanceTopics.Status.RESERVED : BalanceTopics.Status.AWAITING)
                     .setSenderId(order.getBuyer().getId())
                     .setReceiverId(order.getProduct().getSeller().getId())
                     .setOrderId(order.getId())
@@ -81,15 +81,13 @@ public class BalanceService {
             order.setBalanceTransfer(balanceTransferDto));
     }
 
-    @KafkaListener(topics = OrderTopics.ERROR,
-        errorHandler = "loggingKafkaListenerErrorHandler")
+    @KafkaListener(topics = OrderTopics.ERROR)
     protected void processOrderError(final OrderDto order) {
         balanceTransferRepository.findAllByOrderId(order.getId())
-            .forEach(balanceTransfer -> balanceTransfer.setStatus("CANCELLED"));
+            .forEach(balanceTransfer -> balanceTransfer.setStatus(BalanceTopics.Status.CANCELLED));
     }
 
-    @KafkaListener(topics = BalanceTopics.Replenish.NEW,
-        errorHandler = "loggingKafkaListenerErrorHandler")
+    @KafkaListener(topics = BalanceTopics.Replenish.NEW)
     protected void processBalanceReplenishCreated(final BalanceReplenishDto balanceReplenishDto) {
         balanceTransferRepository.findAllAwaitingByUserId(
             balanceReplenishDto.getUserId()
@@ -98,8 +96,7 @@ public class BalanceService {
                 balanceTransferMapper.toDto(balanceTransfer)));
     }
 
-    @KafkaListener(topics = BalanceTopics.Payment.AWAITING,
-        errorHandler = "loggingKafkaListenerErrorHandler")
+    @KafkaListener(topics = BalanceTopics.Payment.AWAITING)
     protected void processBalanceTransferAwaitingPayment(final BalanceTransferDto balanceTransferDto) {
         final long senderBalance = this.getUserBalance(balanceTransferDto.getSenderId());
 
@@ -107,7 +104,7 @@ public class BalanceService {
             final BalanceTransferDto balanceTransfer =
                 balanceTransferRepository
                     .findById(balanceTransferDto.getId())
-                    .map(t -> t.setStatus("RESERVED"))
+                    .map(t -> t.setStatus(BalanceTopics.Status.RESERVED))
                     .map(balanceTransferRepository::save)
                     .map(balanceTransferMapper::toDto)
                     .orElseThrow();
@@ -126,12 +123,13 @@ public class BalanceService {
     }
 
     public List<Serializable> getUserBalanceChanges(UUID userId) {
-        Stream<BalanceReplenishDto> balanceReplenishList = balanceReplenishRepository.findAllByUserId(userId)
-            .stream()
-            .map(balanceReplenishMapper::toDto);
-        Stream<BalanceTransferDto> balanceTransferList = balanceTransferRepository.findAllByUserId(userId)
-            .stream()
-            .map(balanceTransferMapper::toDto);
-        return Stream.concat(balanceReplenishList, balanceTransferList).toList();
+        return Stream.concat(
+            balanceReplenishRepository.findAllByUserId(userId)
+                .stream()
+                .map(balanceReplenishMapper::toDto),
+            balanceTransferRepository.findAllByUserId(userId)
+                .stream()
+                .map(balanceTransferMapper::toDto)
+        ).toList();
     }
 }

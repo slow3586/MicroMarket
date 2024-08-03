@@ -1,18 +1,15 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.spring;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-@Slf4j
 @ControllerAdvice
 public class DefaultExceptionHandler {
     @ExceptionHandler(Throwable.class)
     public ResponseEntity exception(Throwable e) {
-        log.error("#exception handler", e);
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(e.getClass().getSimpleName() + ": " + e.getMessage());

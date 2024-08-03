@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api.audit;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micrometer.tracing.TraceContext;
@@ -9,7 +10,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -36,7 +36,9 @@ import java.util.stream.Collectors;
 public class AuditAspect {
     @Lazy final Tracer tracer;
     Random random = new Random();
-    ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    ObjectMapper objectMapper = new ObjectMapper()
+        .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+        .registerModule(new JavaTimeModule());
 
     @Pointcut("within(com.slow3586.micromarket..*)")
     public void app() {}
@@ -50,6 +52,9 @@ public class AuditAspect {
     @Pointcut("@within(org.springframework.stereotype.Component)")
     public void component() {}
 
+    @Pointcut("@within(org.springframework.stereotype.Repository)")
+    public void repository() {}
+
     @Pointcut("@within(org.springframework.stereotype.Service)")
     public void service() {}
 
@@ -59,10 +64,11 @@ public class AuditAspect {
     @Pointcut("execution(* org.springframework.kafka.core.KafkaTemplate.send(..))")
     public void kafkaTemplate() {}
 
-    @Pointcut("execution(* org.springframework.jdbc.core.JdbcTemplate.*(..))")
-    public void jdbcTemplate() {}
-
-    @Around("app() && !auditDisabled() && !scheduled() && (service() || restController()) || kafkaTemplate()")
+    @Around("app() " +
+        "&& !auditDisabled() " +
+        "&& !scheduled() " +
+        "&& (repository() || service() || restController()) " +
+        "|| kafkaTemplate()")
     protected Object joinPoint(@NonNull ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         final Instant start = Instant.now();
         final TraceContext context = tracer == null ? null : tracer.currentTraceContext().context();
@@ -87,10 +93,9 @@ public class AuditAspect {
                     : exceptionWrapper;
             auditDto.exceptionClass(exception.getClass().getName())
                 .exceptionMessage(exception.getMessage())
-                .exceptionStack(StringUtils.substring(
-                    Arrays.toString(exception.getStackTrace()),
-                    0,
-                    8000).replaceAll(", ", "," + System.lineSeparator()));
+                .exceptionStack(Arrays.stream(exception.getStackTrace())
+                    .map(StackTraceElement::toString)
+                    .toList());
             throw exception;
         } finally {
             final Instant end = Instant.now();

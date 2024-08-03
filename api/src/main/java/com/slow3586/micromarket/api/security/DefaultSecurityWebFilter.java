@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.security;
 
 import com.slow3586.micromarket.api.utils.SecurityUtils;
 import io.jsonwebtoken.Claims;
@@ -12,8 +12,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +29,6 @@ import java.util.UUID;
 @Component
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @RequiredArgsConstructor
-@Slf4j
 public class DefaultSecurityWebFilter extends OncePerRequestFilter {
     @NonFinal
     @Value("${API_KEY}")
@@ -61,7 +60,7 @@ public class DefaultSecurityWebFilter extends OncePerRequestFilter {
                         .getPayload();
 
                     if (Instant.now().isAfter(claims.getExpiration().toInstant())) {
-                        throw new IllegalArgumentException("Token expired!");
+                        throw new IllegalArgumentException("Token expired");
                     }
 
                     authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -71,7 +70,7 @@ public class DefaultSecurityWebFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            log.error("Unable to authorize", e);
+            throw new AccessDeniedException("Access denied", e);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);

@@ -63,8 +63,7 @@ public class OrderConsumer {
             .orElseThrow();
     }
 
-    @KafkaListener(topics = {OrderTopics.ERROR},
-        errorHandler = "loggingKafkaListenerErrorHandler")
+    @KafkaListener(topics = OrderTopics.ERROR)
     public void processOrderError(OrderDto order) {
         orderRepository.findById(order.getId())
             .map(entity -> order.setStatus(OrderTopics.Status.ERROR)

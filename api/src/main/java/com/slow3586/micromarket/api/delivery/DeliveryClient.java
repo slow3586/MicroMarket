@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @FeignClient(
     value = "delivery",
-    url = "${app.client.stock}/api/delivery")
+    url = "${app.client.delivery}/api/delivery")
 public interface DeliveryClient {
     @GetMapping("{productId}")
     DeliveryDto getDelivery(@PathVariable UUID productId);

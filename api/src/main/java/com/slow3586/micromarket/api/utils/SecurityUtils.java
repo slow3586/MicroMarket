@@ -29,7 +29,6 @@ public class SecurityUtils {
                 .orElseThrow(() ->
                     new IllegalStateException("Not logged in"));
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw new IllegalStateException("Could not get current user ID: " + e.getMessage(), e);
         }
     }

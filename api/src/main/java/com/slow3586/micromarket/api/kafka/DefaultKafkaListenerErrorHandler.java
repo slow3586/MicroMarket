@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.kafka;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,6 @@ public class DefaultKafkaListenerErrorHandler implements ConsumerAwareListenerEr
         ListenerExecutionFailedException exception,
         Consumer<?, ?> consumer
     ) {
-        log.error("#handle", exception);
         return MessageBuilder.fromMessage(message)
             .setHeader(KafkaHeaders.EXCEPTION_FQCN, exception.getCause().getClass().getSimpleName())
             .setHeader(KafkaHeaders.EXCEPTION_MESSAGE, exception.getCause().getMessage())

@@ -19,9 +19,7 @@ public class OrderTransactionListenerErrorHandler implements ConsumerAwareListen
         ListenerExecutionFailedException exception,
         Consumer<?, ?> consumer
     ) {
-        log.error("#handle", exception);
-
-        OrderDto order = (OrderDto) message.getPayload();
+        final OrderDto order = (OrderDto) message.getPayload();
 
         return MessageBuilder.withPayload(order
                 .setStatus(OrderTopics.Status.ERROR)

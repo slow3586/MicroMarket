@@ -18,6 +18,13 @@ public class BalanceTopics {
     private static final String BALANCE = "balance";
     private static final String STATUS = ".status";
 
+    public static class Status{
+        public final static String AWAITING = "AWAITING";
+        public final static String RESERVED = "RESERVED";
+        public final static String COMPLETED = "COMPLETED";
+        public final static String CANCELLED = "CANCELLED";
+    }
+
     public static class Replenish {
         private final static String REPLENISH = ".replenish";
         public final static String NEW = BALANCE + REPLENISH + STATUS + ".new";

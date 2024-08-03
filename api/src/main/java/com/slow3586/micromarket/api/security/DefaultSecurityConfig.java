@@ -1,4 +1,4 @@
-package com.slow3586.micromarket.api;
+package com.slow3586.micromarket.api.security;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

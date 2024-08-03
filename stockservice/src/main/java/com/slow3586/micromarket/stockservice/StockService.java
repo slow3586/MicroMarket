@@ -74,8 +74,7 @@ public class StockService {
             order.setStockChange(stockChange));
     }
 
-    @KafkaListener(topics = {OrderTopics.ERROR},
-        errorHandler = "loggingKafkaListenerErrorHandler")
+    @KafkaListener(topics = OrderTopics.ERROR)
     public void processOrderError(OrderDto order) {
         stockChangeRepository.findByOrderId(order.getId())
             .stream()
@@ -83,8 +82,7 @@ public class StockService {
             .forEach(stockChange -> stockChange.setStatus("ORDER_CANCELLED"));
     }
 
-    @KafkaListener(topics = {OrderTopics.Delivery.SENT},
-        errorHandler = "loggingKafkaListenerErrorHandler")
+    @KafkaListener(topics = OrderTopics.Delivery.SENT)
     public void processOrderDeliverySent(OrderDto order) {
         stockChangeRepository.findByOrderId(order.getId())
             .stream()
