@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: deliveryservicedb-statefulset
+spec:
+  serviceName: deliveryservicedb-service
+  replicas: 1
+  minReadySeconds: 120
+  selector:
+    matchLabels:
+      name: deliveryservicedb
+  template:
+    metadata:
+      labels:
+        name: deliveryservicedb
+    spec:
+      containers:
+        - name: deliveryservicedb-container
+          image: 'postgres:14'
+          envFrom:
+            - secretRef:
+                name: dbsecret
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: deliveryservicedb-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: deliveryservicedb-volume
+      spec:
+        storageClassName: deliveryservicedb-volume
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deliveryservicedb-service
+spec:
+  type: NodePort
+  selector:
+    name: deliveryservicedb
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: deliveryservicedb-volume
+spec:
+  storageClassName: deliveryservicedb-volume
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/micromarket/deliveryservicedb"

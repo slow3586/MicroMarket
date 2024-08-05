@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: productservicedb-statefulset
+spec:
+  serviceName: productservicedb-service
+  replicas: 1
+  minReadySeconds: 120
+  selector:
+    matchLabels:
+      name: productservicedb
+  template:
+    metadata:
+      labels:
+        name: productservicedb
+    spec:
+      containers:
+        - name: productservicedb-container
+          image: 'postgres:14'
+          envFrom:
+            - secretRef:
+                name: dbsecret
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: productservicedb-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: productservicedb-volume
+      spec:
+        storageClassName: productservicedb-volume
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: productservicedb-service
+spec:
+  type: NodePort
+  selector:
+    name: productservicedb
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: productservicedb-volume
+spec:
+  storageClassName: productservicedb-volume
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/micromarket/productservicedb"

@@ -9,4 +9,6 @@ import java.util.UUID;
 @Repository
 public interface DeliveryRepository extends JpaRepository<Delivery, UUID> {
     Optional<Delivery> findByOrderId(UUID orderId);
+
+    boolean existsByOrderId(UUID id);
 }

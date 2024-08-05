@@ -17,4 +17,6 @@ public interface StockChangeRepository extends JpaRepository<StockChange, UUID> 
 
     List<StockChange> findAllByProductId(UUID productId);
     Optional<StockChange> findByOrderId(UUID orderId);
+
+    boolean existsByOrderId(UUID id);
 }

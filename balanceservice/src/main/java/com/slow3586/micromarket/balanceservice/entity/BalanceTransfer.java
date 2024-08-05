@@ -2,6 +2,7 @@ package com.slow3586.micromarket.balanceservice.entity;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -37,6 +38,7 @@ public class BalanceTransfer extends DefaultEntity {
     @NotNull
     UUID receiverId;
     @NotNull
+    @Column(unique = true)
     UUID orderId;
     @Min(1)
     @Max(999999)

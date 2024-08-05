@@ -99,6 +99,10 @@ public class DeliveryService {
     @KafkaListener(topics = OrderTopics.Payment.RESERVED,
         errorHandler = "orderTransactionListenerErrorHandler")
     public void processOrderPaymentReserved(OrderDto order) {
+        if (deliveryRepository.existsByOrderId(order.getId())) {
+            return;
+        }
+
         final Delivery delivery = deliveryRepository.save(
             new Delivery()
                 .setCreatedAt(Instant.now())

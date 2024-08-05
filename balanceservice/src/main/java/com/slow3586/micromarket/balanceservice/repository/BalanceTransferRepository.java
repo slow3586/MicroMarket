@@ -37,4 +37,6 @@ public interface BalanceTransferRepository extends JpaRepository<BalanceTransfer
         where b.senderId = :userId or b.receiverId = :userId
         """)
     List<BalanceTransfer> findAllByUserId(UUID userId);
+
+    boolean existsByOrderId(UUID id);
 }

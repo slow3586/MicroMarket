@@ -1,0 +1,38 @@
+imagePullPolicy: Always
+springEnv:
+  - name: server.port
+    value: "8080"
+  - name: KAFKA_SERVERS
+    value: "kafka-service:9091"
+  - name: spring.datasource.url
+    value: "jdbc:postgresql://${spring.application.name}db-service:5432/postgres"
+  - name: spring.liquibase.url
+    value: "jdbc:postgresql://${spring.application.name}db-service:5432/postgres"
+  - name: management.tracing.enabled
+    value: "false"
+  - name: management.zipkin.tracing.endpoint
+    value: "http://zipkin-service:9411/api/v2/spans"
+  - name: SECRET_KEY
+    value: "qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq"
+  - name: API_KEY
+    value: "qwtiuqwtiuqiwutiqwitiqwutiqwuituqwiotuqiowutiq"
+  - name: app.client.balance
+    value: "http://balanceservice-service:8080"
+  - name: app.client.delivery
+    value: "http://deliveryservice-service:8080"
+  - name: app.client.notification
+    value: "http://notificationservice-service:8080"
+  - name: app.client.order
+    value: "http://orderservice-service:8080"
+  - name: app.client.product
+    value: "http://productservice-service:8080"
+  - name: app.client.stock
+    value: "http://stockservice-service:8080"
+  - name: app.client.user
+    value: "http://userservice-service:8080"
+
+grafana:
+  enabled: true
+
+prometheus:
+  enabled: true

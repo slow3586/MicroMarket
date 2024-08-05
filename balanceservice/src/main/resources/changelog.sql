@@ -22,3 +22,6 @@ CREATE TABLE balance_transfer
     created_at  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     CONSTRAINT pk_balance_transfer PRIMARY KEY (id)
 );
+
+ALTER TABLE balance_transfer
+    ADD CONSTRAINT uc_balance_transfer_orderid UNIQUE (order_id);

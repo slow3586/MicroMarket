@@ -2,6 +2,7 @@ package com.slow3586.micromarket.stockservice;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -30,6 +31,8 @@ public class StockChange extends DefaultEntity {
     UUID id;
     @NotNull
     UUID productId;
+    @NotNull
+    @Column(unique = true)
     UUID orderId;
     @NotNull
     int value;

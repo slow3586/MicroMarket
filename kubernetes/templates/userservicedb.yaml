@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: userservicedb-statefulset
+spec:
+  serviceName: userservicedb-service
+  replicas: 1
+  minReadySeconds: 120
+  selector:
+    matchLabels:
+      name: userservicedb
+  template:
+    metadata:
+      labels:
+        name: userservicedb
+    spec:
+      containers:
+        - name: userservicedb-container
+          image: 'postgres:14'
+          envFrom:
+            - secretRef:
+                name: dbsecret
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: userservicedb-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: userservicedb-volume
+      spec:
+        storageClassName: userservicedb-volume
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: userservicedb-service
+spec:
+  type: NodePort
+  selector:
+    name: userservicedb
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: userservicedb-volume
+spec:
+  storageClassName: userservicedb-volume
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/micromarket/userservicedb"

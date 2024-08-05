@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: notificationservicedb-statefulset
+spec:
+  serviceName: notificationservicedb-service
+  replicas: 1
+  minReadySeconds: 120
+  selector:
+    matchLabels:
+      name: notificationservicedb
+  template:
+    metadata:
+      labels:
+        name: notificationservicedb
+    spec:
+      containers:
+        - name: notificationservicedb-container
+          image: 'postgres:14'
+          envFrom:
+            - secretRef:
+                name: dbsecret
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: notificationservicedb-volume
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: notificationservicedb-volume
+      spec:
+        storageClassName: notificationservicedb-volume
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notificationservicedb-service
+spec:
+  type: NodePort
+  selector:
+    name: notificationservicedb
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: notificationservicedb-volume
+spec:
+  storageClassName: notificationservicedb-volume
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/micromarket/notificationservicedb"

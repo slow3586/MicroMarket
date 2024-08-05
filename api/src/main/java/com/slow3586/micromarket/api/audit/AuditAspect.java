@@ -107,7 +107,6 @@ public class AuditAspect {
         } finally {
             final Instant end = Instant.now();
             log.info(objectMapper
-                .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(
                     auditDto.endTime(end)
                         .duration(Duration.between(start, end))

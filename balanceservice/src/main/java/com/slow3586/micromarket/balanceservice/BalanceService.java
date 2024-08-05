@@ -59,7 +59,11 @@ public class BalanceService {
 
     @KafkaListener(topics = OrderTopics.Initialization.STOCK,
         errorHandler = "orderTransactionListenerErrorHandler")
-    protected void processOrderCreated(final OrderDto order) {
+    protected void processOrderCreated(OrderDto order) {
+        if (balanceTransferRepository.existsByOrderId(order.getId())) {
+            return;
+        }
+
         final int total = order.getQuantity() * order.getProduct().getPrice();
         final long userBalance = getUserBalance(order.getBuyer().getId());
         final boolean enoughBalance = total <= userBalance;

@@ -1,0 +1,60 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: micromarket-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: micromarket.ru
+      http:
+        paths:
+          - path: /api/balance
+            pathType: Prefix
+            backend:
+              service:
+                name: balanceservice-service
+                port:
+                  number: 8080
+          - path: /api/delivery
+            pathType: Prefix
+            backend:
+              service:
+                name: deliveryservice-service
+                port:
+                  number: 8080
+          - path: /api/notification
+            pathType: Prefix
+            backend:
+              service:
+                name: notificationservice-service
+                port:
+                  number: 8080
+          - path: /api/order
+            pathType: Prefix
+            backend:
+              service:
+                name: orderservice-service
+                port:
+                  number: 8080
+          - path: /api/product
+            pathType: Prefix
+            backend:
+              service:
+                name: productservice-service
+                port:
+                  number: 8080
+          - path: /api/stock
+            pathType: Prefix
+            backend:
+              service:
+                name: stockservice-service
+                port:
+                  number: 8080
+          - path: /api/user
+            pathType: Prefix
+            backend:
+              service:
+                name: userservice-service
+                port:
+                  number: 8080

@@ -50,6 +50,10 @@ public class StockService {
     @KafkaListener(topics = OrderTopics.Initialization.USER,
         errorHandler = "orderTransactionListenerErrorHandler")
     public void processOrderCreated(OrderDto order) {
+        if (stockChangeRepository.existsByOrderId(order.getId())) {
+            return;
+        }
+
         final UUID productId = order.getProduct().getId();
         final List<StockChange> balanceChangeList =
             stockChangeRepository.findAllByProductId(productId);

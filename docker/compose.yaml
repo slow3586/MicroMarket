@@ -6,9 +6,6 @@ x-logging: &logging
   #  gelf-address: "udp://host.docker.internal:12201"
   driver: "json-file"
 
-x-logging-none: &logging-none
-  driver: "none"
-
 x-healthcheck: &healthcheck
   interval: 5s
   timeout: 5s
@@ -80,7 +77,7 @@ services:
       - './nginx.conf:/etc/nginx/nginx.conf'
 
   balanceservice:
-    build: ./balanceservice
+    build: ../balanceservice
     depends_on:
       balanceservicedb:
         condition: service_healthy
@@ -92,7 +89,7 @@ services:
     <<: *postgres-conf
 
   deliveryservice:
-    build: ./deliveryservice
+    build: ../deliveryservice
     depends_on:
       deliveryservicedb:
         condition: service_healthy
@@ -104,7 +101,7 @@ services:
     <<: *postgres-conf
 
   notificationservice:
-    build: ./notificationservice
+    build: ../notificationservice
     depends_on:
       notificationservicedb:
         condition: service_healthy
@@ -116,7 +113,7 @@ services:
     <<: *postgres-conf
 
   orderservice:
-    build: ./orderservice
+    build: ../orderservice
     depends_on:
       orderservicedb:
         condition: service_healthy
@@ -128,7 +125,7 @@ services:
     <<: *postgres-conf
 
   productservice:
-    build: ./productservice
+    build: ../productservice
     depends_on:
       productservicedb:
         condition: service_healthy
@@ -140,7 +137,7 @@ services:
     <<: *postgres-conf
 
   stockservice:
-    build: ./stockservice
+    build: ../stockservice
     depends_on:
       stockservicedb:
         condition: service_healthy
@@ -152,7 +149,7 @@ services:
     <<: *postgres-conf
 
   userservice:
-    build: ./userservice
+    build: ../userservice
     depends_on:
       userservicedb:
         condition: service_healthy
@@ -193,7 +190,6 @@ services:
   kafdrop:
     image: obsidiandynamics/kafdrop:4.0.1
     restart: always
-    logging: *logging
     depends_on:
       kafka:
         condition: service_healthy
@@ -203,3 +199,33 @@ services:
     healthcheck:
       test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:9000 || exit 1"
       <<: *healthcheck
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    ports: [ "3000:3000" ]
+    volumes:
+      - ./grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      #- ./config/grafana/plugins/app.yaml:/etc/grafana/provisioning/plugins/app.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=accessControlOnCall lokiLogsDataplane
+      #- GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app
+
+  loki:
+    image: grafana/loki:3.0.0
+    expose: [ "3100"]
+    command: -config.file=/etc/loki/loki.yaml
+    volumes:
+      - ./loki.yaml:/etc/loki/loki.yaml
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    depends_on:
+      - loki
+    command: -config.file=/etc/promtail/promtail.yaml
+    volumes:
+      - ./promtail.yaml:/etc/promtail/promtail.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
