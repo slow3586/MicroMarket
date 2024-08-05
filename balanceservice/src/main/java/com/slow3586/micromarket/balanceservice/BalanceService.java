@@ -40,7 +40,7 @@ public class BalanceService {
     BalanceTransferMapper balanceTransferMapper;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    public void createBalanceReplenish(final CreateBalanceReplenishRequest request) {
+    public UUID createBalanceReplenish(final CreateBalanceReplenishRequest request) {
         final BalanceReplenish balanceReplenish = balanceReplenishRepository.save(
             new BalanceReplenish()
                 .setUserId(request.getUserId())
@@ -53,6 +53,8 @@ public class BalanceService {
                     BalanceTopics.Replenish.NEW,
                     balanceReplenish.getUserId(),
                     balanceReplenishMapper.toDto(balanceReplenish)));
+
+        return balanceReplenish.getId();
     }
 
     @KafkaListener(topics = OrderTopics.Initialization.STOCK,

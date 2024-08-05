@@ -2,6 +2,7 @@ package com.slow3586.micromarket.api.audit;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
@@ -14,6 +15,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Lazy;
@@ -23,7 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Aspect
@@ -35,9 +36,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuditAspect {
     @Lazy final Tracer tracer;
-    Random random = new Random();
     ObjectMapper objectMapper = new ObjectMapper()
         .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .registerModule(new JavaTimeModule());
 
     @Pointcut("within(com.slow3586.micromarket..*)")
@@ -72,19 +73,25 @@ public class AuditAspect {
     protected Object joinPoint(@NonNull ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         final Instant start = Instant.now();
         final TraceContext context = tracer == null ? null : tracer.currentTraceContext().context();
+        final MethodSignature methodSignature = (MethodSignature) proceedingJoinPoint.getSignature();
         final AuditDto.AuditDtoBuilder auditDto = AuditDto.builder()
             .spanId(context == null ? null : context.spanId())
             .traceId(context == null ? null : context.traceId())
-            .methodClass(proceedingJoinPoint.getSignature().getDeclaringTypeName())
-            .methodName(proceedingJoinPoint.getSignature().getName())
-            .methodArgs(Arrays.stream(proceedingJoinPoint.getArgs())
-                .map(Objects::toString)
-                .collect(Collectors.joining(", ")))
+            .methodClass(methodSignature.getDeclaringTypeName())
+            .methodName(methodSignature.getName())
             .startTime(start);
+
+        if (proceedingJoinPoint.getArgs().length > 0) {
+            auditDto.methodArgs(Arrays.stream(proceedingJoinPoint.getArgs())
+                .map(Objects::toString)
+                .collect(Collectors.joining(", ")));
+        }
 
         try {
             final Object result = proceedingJoinPoint.proceed();
-            auditDto.methodResult(Objects.toString(result));
+            if (!methodSignature.getReturnType().equals(Void.TYPE)) {
+                auditDto.methodResult(Objects.toString(result));
+            }
             return result;
         } catch (final Throwable exceptionWrapper) {
             final Throwable exception =

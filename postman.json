@@ -340,7 +340,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"login\": \"buyer\",\r\n  \"password\": \"password\"\r\n}",
+					"raw": "{\r\n  \"login\": \"{{buyerUserLogin}}\",\r\n  \"password\": \"password\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -609,6 +609,64 @@
 			"response": []
 		},
 		{
+			"name": "Check order status as buyer",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json();\r",
+							"if (!jsonData.delivery) {\r",
+							"     pm.execution.setNextRequest(pm.request.name);\r",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{buyerBearerToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/order/{{orderId}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"order",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Check delivery status as buyer",
 			"event": [
 				{
@@ -794,59 +852,6 @@
 			"response": []
 		},
 		{
-			"name": "Check order status as buyer",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Not blank\", function () {\r",
-							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"No exceptions\", function () {\r",
-							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
-							"});"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{buyerBearerToken}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/api/order/{{orderId}}",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"order",
-						"{{orderId}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "List all balance changes as buyer",
 			"event": [
 				{
@@ -947,6 +952,114 @@
 						"api",
 						"balance",
 						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List all notifications as buyer",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{sellerBearerToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/notification/user/{{buyerUserId}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"notification",
+						"user",
+						"{{buyerUserId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List all notifications as seller",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{sellerBearerToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/notification/user/{{sellerUserId}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"notification",
+						"user",
+						"{{sellerUserId}}"
 					]
 				}
 			},

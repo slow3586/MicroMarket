@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/balance")
@@ -41,7 +42,7 @@ public class BalanceController implements BalanceClient {
 
     @PostMapping("replenish/create")
     @PreAuthorize("hasAnyAuthority('API')")
-    public void createReplenishBalance(@RequestBody @Valid CreateBalanceReplenishRequest request) {
-        balanceService.createBalanceReplenish(request);
+    public UUID createReplenishBalance(@RequestBody @Valid CreateBalanceReplenishRequest request) {
+        return balanceService.createBalanceReplenish(request);
     }
 }
