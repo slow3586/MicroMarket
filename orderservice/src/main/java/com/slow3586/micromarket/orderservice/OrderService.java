@@ -45,8 +45,8 @@ public class OrderService {
             .map(orderMapper::toDto)
             .orElseThrow();
 
-        orderDto.setBuyer(userClient.getUser(orderDto.getBuyer().getId()));
-        orderDto.setProduct(productClient.getProduct(orderDto.getProduct().getId()));
+        orderDto.setBuyer(userClient.getUserById(orderDto.getBuyer().getId()));
+        orderDto.setProduct(productClient.getProductById(orderDto.getProduct().getId()));
 
         return orderDto;
     }

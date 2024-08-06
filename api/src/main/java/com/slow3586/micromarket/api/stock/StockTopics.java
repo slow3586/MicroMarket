@@ -19,9 +19,9 @@ public class StockTopics {
     public final static String TABLE = NAME + ".table";
 
     public static final class Utils {
-        public static final JsonSerde<StockChangeDto> SERDE = new JsonSerde<>(StockChangeDto.class);
-        public static final Consumed<UUID, StockChangeDto> CONSUMED = Consumed.with(Serdes.UUID(), SERDE);
-        public static final Produced<UUID, StockChangeDto> PRODUCED = Produced.with(Serdes.UUID(), SERDE);
+        public static final JsonSerde<StockUpdateOrderDto> SERDE = new JsonSerde<>(StockUpdateOrderDto.class);
+        public static final Consumed<UUID, StockUpdateOrderDto> CONSUMED = Consumed.with(Serdes.UUID(), SERDE);
+        public static final Produced<UUID, StockUpdateOrderDto> PRODUCED = Produced.with(Serdes.UUID(), SERDE);
     }
 
     @Deprecated

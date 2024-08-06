@@ -98,7 +98,7 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
-    public UserDto findUserById(UUID uuid) {
+    public UserDto getUserById(UUID uuid) {
         return userRepository.findById(uuid)
             .map(userMapper::toDto)
             .orElseThrow();

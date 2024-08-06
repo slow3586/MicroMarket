@@ -1,30 +1,30 @@
-package com.slow3586.micromarket.stockservice;
+package com.slow3586.micromarket.stockservice.entity;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
 @Setter
 @ToString
 @Accessors(chain = true)
-@Entity(name = "stock_change")
+@Entity(name = "stock_update")
 @EntityListeners(AuditEntityListener.class)
-public class StockChange extends DefaultEntity {
+public class StockUpdate extends DefaultEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
@@ -32,10 +32,7 @@ public class StockChange extends DefaultEntity {
     @NotNull
     UUID productId;
     @NotNull
-    @Column(unique = true)
-    UUID orderId;
-    @NotNull
     int value;
-    @NotBlank
-    String status;
+    @CreationTimestamp
+    Instant createdAt;
 }

@@ -17,6 +17,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -65,7 +66,7 @@ public class BalanceService {
         }
 
         final int total = order.getQuantity() * order.getProduct().getPrice();
-        final long userBalance = getUserBalance(order.getBuyer().getId());
+        final long userBalance = this.getBalanceSumByUserId(order.getBuyer().getId());
         final boolean enoughBalance = total <= userBalance;
 
         final BalanceTransfer balanceTransfer =
@@ -104,7 +105,7 @@ public class BalanceService {
 
     @KafkaListener(topics = BalanceTopics.Payment.AWAITING)
     protected void processBalanceTransferAwaitingPayment(final BalanceTransferDto balanceTransferDto) {
-        final long senderBalance = this.getUserBalance(balanceTransferDto.getSenderId());
+        final long senderBalance = this.getBalanceSumByUserId(balanceTransferDto.getSenderId());
 
         if (senderBalance >= balanceTransferDto.getValue()) {
             final BalanceTransferDto balanceTransfer =
@@ -122,13 +123,15 @@ public class BalanceService {
         }
     }
 
-    public long getUserBalance(UUID userId) {
+    @Cacheable(value = "getBalanceSumByUserId", key = "#userId")
+    public long getBalanceSumByUserId(final UUID userId) {
         return balanceReplenishRepository.sumAllByUserId(userId)
             + balanceTransferRepository.sumAllPositiveByUserId(userId)
             - balanceTransferRepository.sumAllNegativeByUserId(userId);
     }
 
-    public List<Serializable> getUserBalanceChanges(UUID userId) {
+    @Cacheable(value = "getAllBalanceChangesByUserId", key = "#userId")
+    public List<Serializable> getAllBalanceChangesByUserId(UUID userId) {
         return Stream.concat(
             balanceReplenishRepository.findAllByUserId(userId)
                 .stream()

@@ -7,7 +7,6 @@ import lombok.experimental.Accessors;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @Builder
@@ -25,5 +24,5 @@ public class AuditDto {
     String methodResult;
     String exceptionClass;
     String exceptionMessage;
-    List<String> exceptionStack;
+    String exceptionStack;
 }

@@ -53,6 +53,9 @@ public class OrderStream {
         KTable<UUID, OrderDto> orderDeliveryReceivedTable = streamsBuilder.table(
             OrderTopics.Delivery.RECEIVED,
             OrderTopics.Utils.CONSUMED);
+        KTable<UUID, OrderDto> orderErrorTable = streamsBuilder.table(
+            OrderTopics.ERROR,
+            OrderTopics.Utils.CONSUMED);
         KTable<UUID, BalanceTransferDto> balancePaymentReservedTable = streamsBuilder.table(
             BalanceTopics.Payment.RESERVED,
             BalanceTopics.Payment.Utils.CONSUMED);
@@ -67,6 +70,9 @@ public class OrderStream {
         orderCreatedTable
             .suppress(Suppressed.untilTimeLimit(Duration.ofSeconds(10), null))
             .leftJoin(orderPaymentAwaitingTable, KeyValue::new)
+            .filter((k, v) -> v.value == null)
+            .mapValues(v -> v.key)
+            .leftJoin(orderErrorTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("CREATED_TIMEOUT"))
             .toStream()
@@ -85,6 +91,9 @@ public class OrderStream {
             .suppress(Suppressed.untilTimeLimit(Duration.ofMinutes(1), null))
             .leftJoin(orderPaymentReservedTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
+            .mapValues(v -> v.key)
+            .leftJoin(orderErrorTable, KeyValue::new)
+            .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("PAYMENT_AWAITING_TIMEOUT"))
             .toStream()
             .to(OrderTopics.ERROR, OrderTopics.Utils.PRODUCED);
@@ -102,6 +111,9 @@ public class OrderStream {
             .suppress(Suppressed.untilTimeLimit(Duration.ofDays(1), null))
             .leftJoin(orderDeliverySentTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
+            .mapValues(v -> v.key)
+            .leftJoin(orderErrorTable, KeyValue::new)
+            .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("DELIVERY_AWAITING_TIMEOUT"))
             .toStream()
             .to(OrderTopics.ERROR, OrderTopics.Utils.PRODUCED);
@@ -118,6 +130,9 @@ public class OrderStream {
         orderDeliverySentTable
             .suppress(Suppressed.untilTimeLimit(Duration.ofDays(30), null))
             .leftJoin(orderDeliveryReceivedTable, KeyValue::new)
+            .filter((k, v) -> v.value == null)
+            .mapValues(v -> v.key)
+            .leftJoin(orderErrorTable, KeyValue::new)
             .filter((k, v) -> v.value == null)
             .mapValues(v -> v.key.setError("DELIVERY_SENT_TIMEOUT"))
             .toStream()

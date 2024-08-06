@@ -5,18 +5,27 @@ spring:
     banner-mode: 'off'
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: 'jdbc:postgresql://${spring.application.name}db:5432/postgres'
+    url: 'jdbc:postgresql://postgres:5432/postgres'
     username: postgres
     password: postgres
+    hikari:
+      schema: '${spring.application.name}'
+  jpa:
+    properties:
+      hibernate:
+        default_schema: '${spring.application.name}'
   jackson:
     default-property-inclusion: non_empty
+
   liquibase:
     enabled: true
     change-log: changelog.sql
     driver-class-name: org.postgresql.Driver
     user: postgres
     password: postgres
-    url: 'jdbc:postgresql://${spring.application.name}db:5432/postgres'
+    url: 'jdbc:postgresql://postgres:5432/postgres'
+    default-schema: '${spring.application.name}'
+    liquibase-schema: '${spring.application.name}'
   kafka:
     bootstrap-servers: ${KAFKA_SERVERS}
     producer:
@@ -51,6 +60,24 @@ spring:
           default:
             default-request-headers:
               Authorization: Bearer ${API_KEY}
+  cache:
+    type: redis
+  data:
+    redis:
+      host: redis
+      password: redis
+      client-name: ${spring.application.name}
+
+SECRET_KEY: qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq
+API_KEY: qwtiuqwtiuqiwutiqwitiqwutiqwuituqwiotuqiowutiq
+app:
+  client.balance: http://balanceservice:8080
+  client.delivery: http://deliveryservice:8080
+  client.notification: http://notificationservice:8080
+  client.order: http://orderservice:8080
+  client.product: http://productservice:8080
+  client.stock: http://stockservice:8080
+  client.user: http://userservice:8080
 
 management:
   endpoints:

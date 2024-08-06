@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api.notification;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,5 +13,6 @@ import java.util.UUID;
     url = "${app.client.notification}/api/notification")
 public interface NotificationClient {
     @GetMapping("user/{userId}")
-    List<NotificationDto> getUserNotifications(@PathVariable("userId") UUID userId);
+    @Cacheable(value = "getAllNotificationsByUserId", key = "#userId")
+    List<NotificationDto> getAllNotificationsByUserId(@PathVariable("userId") UUID userId);
 }

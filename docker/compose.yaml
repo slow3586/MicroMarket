@@ -29,28 +29,19 @@ x-spring-env: &spring-env
   app.client.user: http://userservice:8080
 
 x-spring-conf: &spring-conf
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    kafka:
+      condition: service_healthy
   environment:
     <<: *spring-env
   logging: *logging
   expose: [ "8080" ]
   healthcheck:
     test: "curl --location --output /dev/null --head --silent --fail 127.0.0.1:8080/actuator/health || exit 1"
-    <<: *healthcheck
-
-x-postgresdb-conf: &postgres-conf
-  image: postgres:alpine
-  logging: *logging
-  environment:
-    POSTGRES_DB: postgres
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: postgres
-  expose: [ "5432" ]
-  command: >
-    postgres 
-    -c ssl=off
-    -c wal_level=logical
-  healthcheck:
-    test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
     <<: *healthcheck
 
 services:
@@ -78,87 +69,58 @@ services:
 
   balanceservice:
     build: ../balanceservice
-    depends_on:
-      balanceservicedb:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
     <<: *spring-conf
-
-  balanceservicedb:
-    <<: *postgres-conf
 
   deliveryservice:
     build: ../deliveryservice
-    depends_on:
-      deliveryservicedb:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
     <<: *spring-conf
-
-  deliveryservicedb:
-    <<: *postgres-conf
 
   notificationservice:
     build: ../notificationservice
-    depends_on:
-      notificationservicedb:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
     <<: *spring-conf
-
-  notificationservicedb:
-    <<: *postgres-conf
 
   orderservice:
     build: ../orderservice
-    depends_on:
-      orderservicedb:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
     <<: *spring-conf
-
-  orderservicedb:
-    <<: *postgres-conf
 
   productservice:
     build: ../productservice
-    depends_on:
-      productservicedb:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
     <<: *spring-conf
-
-  productservicedb:
-    <<: *postgres-conf
 
   stockservice:
     build: ../stockservice
-    depends_on:
-      stockservicedb:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
     <<: *spring-conf
-
-  stockservicedb:
-    <<: *postgres-conf
 
   userservice:
     build: ../userservice
-    depends_on:
-      userservicedb:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
     <<: *spring-conf
 
-  userservicedb:
-    <<: *postgres-conf
+  postgres:
+    image: postgres:alpine
+    logging: *logging
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: [ "5432:5432" ]
+    command: >
+      postgres 
+      -c ssl=off
+      -c wal_level=logical
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      <<: *healthcheck
+
+  redis:
+    image: redis:alpine
+    ports: [ "6379:6379" ]
+    logging: *logging
+    environment:
+      REDIS_DATABASES: 16
+      REDIS_PASSWORD: redis
+    healthcheck:
+      test: "redis-cli ping || exit 1"
+      <<: *healthcheck
 
   kafka:
     image: confluentinc/cp-kafka:7.5.5
@@ -180,7 +142,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_HEAP_OPTS: "-Xms128m -Xmx512m"
+      KAFKA_HEAP_OPTS: "-Xms128m -Xmx1024m"
       KAFKA_LOG4J_ROOT_LOGLEVEL: 'WARN'
       KAFKA_LOG4J_LOGGERS: 'org.apache.zookeeper=WARN,org.apache.kafka=WARN,kafka=WARN,kafka.cluster=WARN,kafka.controller=WARN,kafka.coordinator=WARN,kafka.log=WARN,kafka.server=WARN,kafka.zookeeper=WARN,state.change.logger=WARN'
     healthcheck:
@@ -215,7 +177,7 @@ services:
 
   loki:
     image: grafana/loki:3.0.0
-    expose: [ "3100"]
+    expose: [ "3100" ]
     command: -config.file=/etc/loki/loki.yaml
     volumes:
       - ./loki.yaml:/etc/loki/loki.yaml

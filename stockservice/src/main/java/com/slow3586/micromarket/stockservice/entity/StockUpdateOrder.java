@@ -1,24 +1,21 @@
-package com.slow3586.micromarket.productservice;
+package com.slow3586.micromarket.stockservice.entity;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.hibernate.validator.constraints.Length;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -26,23 +23,23 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
-@AllArgsConstructor
 @Accessors(chain = true)
-@Entity(name = "product")
+@Entity(name = "stock_update_order")
 @EntityListeners(AuditEntityListener.class)
-public class Product extends DefaultEntity {
+public class StockUpdateOrder extends DefaultEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     UUID id;
     @NotNull
-    UUID sellerId;
-    @Length(min = 1, max = 64)
-    String name;
-    @Min(1)
-    @Max(999999)
-    int price;
+    UUID productId;
+    @NotNull
+    @Column(unique = true)
+    UUID orderId;
+    @NotNull
+    int value;
+    @NotBlank
+    String status;
     @CreationTimestamp
     Instant createdAt;
 }

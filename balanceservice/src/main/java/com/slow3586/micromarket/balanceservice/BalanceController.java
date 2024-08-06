@@ -31,13 +31,13 @@ public class BalanceController implements BalanceClient {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('USER')")
     public long getCurrentUserBalance() {
-        return balanceService.getUserBalance(SecurityUtils.getPrincipalId());
+        return balanceService.getBalanceSumByUserId(SecurityUtils.getPrincipalId());
     }
 
     @GetMapping("list")
     @PreAuthorize("hasAnyAuthority('USER')")
     public List<Serializable> getCurrentUserBalanceChanges() {
-        return balanceService.getUserBalanceChanges(SecurityUtils.getPrincipalId());
+        return balanceService.getAllBalanceChangesByUserId(SecurityUtils.getPrincipalId());
     }
 
     @PostMapping("replenish/create")

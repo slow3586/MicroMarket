@@ -1,9 +1,6 @@
 package com.slow3586.micromarket.api.audit;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
 import lombok.AccessLevel;
@@ -11,6 +8,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -25,6 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Aspect
@@ -36,10 +35,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuditAspect {
     @Lazy final Tracer tracer;
-    ObjectMapper objectMapper = new ObjectMapper()
-        .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
-        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-        .registerModule(new JavaTimeModule());
+    final ObjectMapper objectMapper;
 
     @Pointcut("within(com.slow3586.micromarket..*)")
     public void app() {}
@@ -98,11 +94,15 @@ public class AuditAspect {
                 exceptionWrapper instanceof UndeclaredThrowableException
                     ? ((UndeclaredThrowableException) exceptionWrapper).getUndeclaredThrowable()
                     : exceptionWrapper;
+            StringJoiner message = new StringJoiner("; ");
+            Throwable cause = exception.getCause();
+            while (cause != null) {
+                message.add(cause.getMessage());
+                cause = cause.getCause();
+            }
             auditDto.exceptionClass(exception.getClass().getName())
-                .exceptionMessage(exception.getMessage())
-                .exceptionStack(Arrays.stream(exception.getStackTrace())
-                    .map(StackTraceElement::toString)
-                    .toList());
+                .exceptionMessage(message.toString())
+                .exceptionStack(ExceptionUtils.getStackTrace(exception));
             throw exception;
         } finally {
             final Instant end = Instant.now();

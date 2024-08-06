@@ -28,8 +28,8 @@ public class UserController implements UserClient {
     UserService userService;
 
     @GetMapping("{uuid}")
-    public UserDto getUser(@PathVariable UUID uuid) {
-        return userService.findUserById(uuid);
+    public UserDto getUserById(@PathVariable UUID uuid) {
+        return userService.getUserById(uuid);
     }
 
     @PostMapping("register")

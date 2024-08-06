@@ -25,7 +25,7 @@ public class NotificationController implements NotificationClient {
     @Override
     @GetMapping("user/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public List<NotificationDto> getUserNotifications(@PathVariable UUID userId) {
+    public List<NotificationDto> getAllNotificationsByUserId(@PathVariable UUID userId) {
         return notificationService.getUserNotifications(userId);
     }
 }

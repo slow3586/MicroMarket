@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -11,4 +12,5 @@ import java.util.UUID;
 public class UserDto implements Serializable {
     UUID id;
     String name;
+    Instant createdAt;
 }

@@ -4,6 +4,7 @@ import com.slow3586.micromarket.api.user.UserDto;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -13,4 +14,5 @@ public class ProductDto {
     UserDto seller;
     String name;
     int price;
+    Instant createdAt;
 }

@@ -1,9 +1,10 @@
 package com.slow3586.micromarket.stockservice;
 
 
-import com.slow3586.micromarket.api.stock.StockChangeDto;
 import com.slow3586.micromarket.api.stock.StockClient;
-import com.slow3586.micromarket.api.stock.UpdateStockRequest;
+import com.slow3586.micromarket.api.stock.StockUpdateDto;
+import com.slow3586.micromarket.api.stock.StockUpdateOrderDto;
+import com.slow3586.micromarket.api.stock.StockUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,18 +28,19 @@ public class StockController implements StockClient {
 
     @GetMapping("{productId}")
     @PreAuthorize("isAuthenticated()")
-    public long getProductStock(@PathVariable UUID productId) {
-        return stockService.getProductStock(productId);
+    public long getStockSumByProductId(@PathVariable UUID productId) {
+        return stockService.getStockSumByProductId(productId);
     }
 
-    @Override
-    public StockChangeDto getStockChangeByOrder(UUID orderId) {
-        return stockService.getStockChangeByOrder(orderId);
+    @GetMapping("order/{orderId}")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public StockUpdateOrderDto getStockOrderChangeByOrderId(@PathVariable UUID orderId) {
+        return stockService.getStockOrderChangeByOrderId(orderId);
     }
 
     @PostMapping("update")
     @PreAuthorize("hasAnyAuthority('USER')")
-    public StockChangeDto updateStock(@RequestBody @Valid UpdateStockRequest request) {
+    public StockUpdateDto updateStock(@RequestBody @Valid StockUpdateRequest request) {
         return stockService.updateStock(request);
     }
 }

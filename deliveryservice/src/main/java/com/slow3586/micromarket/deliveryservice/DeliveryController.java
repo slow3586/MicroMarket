@@ -24,7 +24,7 @@ public class DeliveryController implements DeliveryClient {
 
     @GetMapping("{deliveryId}")
     @PreAuthorize("isAuthenticated()")
-    public DeliveryDto getDelivery(@PathVariable UUID deliveryId) {
+    public DeliveryDto getDeliveryById(@PathVariable UUID deliveryId) {
         return deliveryService.getDelivery(deliveryId);
     }
 

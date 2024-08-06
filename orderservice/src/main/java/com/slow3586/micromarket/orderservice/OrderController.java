@@ -29,7 +29,7 @@ public class OrderController implements OrderClient {
 
     @GetMapping("{orderId}")
     @PreAuthorize("isAuthenticated()")
-    public OrderDto getOrder(@PathVariable UUID orderId) {
+    public OrderDto getOrderById(@PathVariable UUID orderId) {
         return orderService.getOrder(orderId);
     }
 
