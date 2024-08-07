@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 public class DeliveryDto implements Serializable {
     UUID id;
-    String status;
+    DeliveryConfig.Status status;
     OrderDto order;
     Instant createdAt;
     Instant sentAt;

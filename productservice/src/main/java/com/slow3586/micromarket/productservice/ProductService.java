@@ -1,8 +1,6 @@
 package com.slow3586.micromarket.productservice;
 
 
-import com.slow3586.micromarket.api.order.OrderDto;
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.product.CreateProductRequest;
 import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.product.ProductQuery;
@@ -15,7 +13,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -32,23 +29,6 @@ public class ProductService {
     ProductMapper productMapper;
     UserClient userClient;
     KafkaTemplate<UUID, Object> kafkaTemplate;
-
-    @KafkaListener(topics = OrderTopics.CREATED,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderCreated(OrderDto order) {
-        ProductDto product = productRepository.findById(
-                order.getProduct().getId())
-            .map(productMapper::toDto)
-            .orElseThrow();
-        if (product.getSeller().getId().equals(order.getBuyer().getId())) {
-            throw new IllegalStateException("Нельзя купить свой заказ!");
-        }
-        kafkaTemplate.send(
-            OrderTopics.Initialization.PRODUCT,
-            order.getId(),
-            order.setProduct(
-                product));
-    }
 
     public ProductDto createProduct(CreateProductRequest request) {
         return productMapper.toDto(

@@ -30,7 +30,7 @@ public class OrderController implements OrderClient {
     @GetMapping("{orderId}")
     @PreAuthorize("isAuthenticated()")
     public OrderDto getOrderById(@PathVariable UUID orderId) {
-        return orderService.getOrder(orderId);
+        return orderService.getOrderById(orderId);
     }
 
     @PostMapping("create")

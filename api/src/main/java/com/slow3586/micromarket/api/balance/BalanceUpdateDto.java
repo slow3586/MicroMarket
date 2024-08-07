@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
-public class BalanceReplenishDto implements Serializable {
+public class BalanceUpdateDto implements Serializable {
     UUID id;
     @NotNull
     UUID userId;

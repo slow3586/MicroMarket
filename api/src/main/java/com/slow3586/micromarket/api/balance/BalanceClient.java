@@ -16,5 +16,5 @@ public interface BalanceClient {
     long getCurrentUserBalance();
 
     @PostMapping("add")
-    UUID createReplenishBalance(@RequestBody @Valid CreateBalanceReplenishRequest request);
+    UUID createBalanceUpdate(@RequestBody @Valid CreateBalanceUpdateRequest request);
 }

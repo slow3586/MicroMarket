@@ -4,13 +4,11 @@ package com.slow3586.micromarket.orderservice;
 import com.slow3586.micromarket.api.audit.AuditDisabled;
 import com.slow3586.micromarket.api.delivery.DeliveryClient;
 import com.slow3586.micromarket.api.order.CreateOrderRequest;
+import com.slow3586.micromarket.api.order.OrderConfig;
 import com.slow3586.micromarket.api.order.OrderDto;
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.product.ProductClient;
-import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.stock.StockClient;
 import com.slow3586.micromarket.api.user.UserClient;
-import com.slow3586.micromarket.api.user.UserDto;
 import com.slow3586.micromarket.api.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +20,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -39,7 +36,7 @@ public class OrderService {
     DeliveryClient deliveryClient;
     StockClient stockClient;
 
-    public OrderDto getOrder(UUID orderId) {
+    public OrderDto getOrderById(UUID orderId) {
         final OrderDto orderDto = orderRepository
             .findById(orderId)
             .map(orderMapper::toDto)
@@ -52,37 +49,32 @@ public class OrderService {
     }
 
     public OrderDto createOrder(CreateOrderRequest request) {
-        final Order order = orderRepository.save(
-            new Order()
-                .setBuyerId(SecurityUtils.getPrincipalId())
-                .setProductId(request.getProductId())
-                .setQuantity(request.getQuantity())
-                .setStatus(OrderTopics.Status.INITIALIZATION_AWAITING)
-                .setCreatedAt(Instant.now()));
+        final Order order = orderRepository.save(new Order()
+            .setBuyerId(SecurityUtils.getPrincipalId())
+            .setProductId(request.getProductId())
+            .setQuantity(request.getQuantity())
+            .setStatus(OrderConfig.Status.CREATED));
+
+        final OrderDto dto = orderMapper.toDto(order);
 
         kafkaTemplate.executeInTransaction((kafkaOperations) ->
-            kafkaOperations.send(OrderTopics.CREATED,
+            kafkaOperations.send(
+                OrderConfig.TOPIC,
                 order.getId(),
-                new OrderDto()
-                    .setId(order.getId())
-                    .setBuyer(new UserDto().setId(order.getBuyerId()))
-                    .setProduct(new ProductDto().setId(order.getProductId()))
-                    .setQuantity(order.getQuantity())
-                    .setStatus(order.getStatus())
-                    .setCreatedAt(Instant.now())));
+                dto));
 
-        return orderMapper.toDto(order);
+        return dto;
     }
 
     public OrderDto updateOrderCancelled(UUID orderId) {
-        OrderDto orderDto = orderRepository
+        final OrderDto orderDto = orderRepository
             .findById(orderId)
-            .map(o -> o.setStatus(OrderTopics.Status.CANCELLED))
+            .map(o -> o.setStatus(OrderConfig.Status.CANCELLED))
             .map(orderMapper::toDto)
             .orElseThrow();
 
         kafkaTemplate.executeInTransaction((kafkaOperations) ->
-            kafkaOperations.send(OrderTopics.ERROR,
+            kafkaOperations.send(OrderConfig.TOPIC,
                 orderDto.getId(),
                 orderDto));
 
@@ -93,13 +85,21 @@ public class OrderService {
     @Scheduled(cron = "*/10 * * * * *")
     @AuditDisabled
     public void verify() {
-        orderRepository.findBadOrders()
+        orderRepository.queryForAwaitingBalanceTimeoutCheck()
             .forEach(order ->
                 kafkaTemplate.executeInTransaction((operations) ->
-                    operations.send(OrderTopics.ERROR,
+                    operations.send(OrderConfig.TOPIC,
                         order.getId(),
                         orderMapper.toDto(
-                            order.setStatus(OrderTopics.Status.ERROR)
-                                .setError("TIMEOUT")))));
+                            order.setStatus(OrderConfig.Status.CANCELLED)
+                                .setError("AWAITING_BALANCE_TIMEOUT")))));
+        orderRepository.queryForAwaitingBalanceTimeoutCheck()
+            .forEach(order ->
+                kafkaTemplate.executeInTransaction((operations) ->
+                    operations.send(OrderConfig.TOPIC,
+                        order.getId(),
+                        orderMapper.toDto(
+                            order.setStatus(OrderConfig.Status.CANCELLED)
+                                .setError("AWAITING_DELIVERY_TIMEOUT")))));
     }
 }

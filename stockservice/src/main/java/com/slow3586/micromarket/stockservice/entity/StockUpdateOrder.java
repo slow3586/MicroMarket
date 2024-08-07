@@ -2,13 +2,15 @@ package com.slow3586.micromarket.stockservice.entity;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
+import com.slow3586.micromarket.api.stock.StockConfig;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,8 +40,9 @@ public class StockUpdateOrder extends DefaultEntity {
     UUID orderId;
     @NotNull
     int value;
-    @NotBlank
-    String status;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    StockConfig.UpdateOrder.Status status;
     @CreationTimestamp
     Instant createdAt;
 }

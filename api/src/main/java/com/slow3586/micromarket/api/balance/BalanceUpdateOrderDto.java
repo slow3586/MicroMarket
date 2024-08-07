@@ -10,13 +10,15 @@ import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
-public class BalanceTransferDto implements Serializable {
+public class BalanceUpdateOrderDto implements Serializable {
     UUID id;
+    @NotNull
+    UUID orderId;
     @NotNull
     UUID senderId;
     @NotNull
     UUID receiverId;
     int value;
-    String status;
+    BalanceConfig.BalanceUpdateOrder.Status status;
     Instant createdAt;
 }

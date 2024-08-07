@@ -1,7 +1,7 @@
 package com.slow3586.micromarket.orderservice;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
-import com.slow3586.micromarket.api.order.OrderTopics;
+import com.slow3586.micromarket.api.order.OrderConfig;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -43,10 +43,9 @@ public class Order extends DefaultEntity {
     int quantity;
     @NotNull
     @Enumerated(EnumType.STRING)
-    OrderTopics.Status status;
+    OrderConfig.Status status;
     String error;
 
-    @NotNull
     @CreationTimestamp
     Instant createdAt;
     Instant paidAt;

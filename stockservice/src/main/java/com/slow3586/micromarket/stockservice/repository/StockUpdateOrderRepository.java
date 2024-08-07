@@ -1,6 +1,8 @@
 package com.slow3586.micromarket.stockservice.repository;
 
+import com.slow3586.micromarket.api.stock.StockConfig;
 import com.slow3586.micromarket.stockservice.entity.StockUpdateOrder;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -16,6 +18,7 @@ public interface StockUpdateOrderRepository extends JpaRepository<StockUpdateOrd
     long sumAllByProductId(UUID productId);
 
     Optional<StockUpdateOrder> findByOrderId(UUID orderId);
+    Optional<StockUpdateOrder> findByOrderIdAndStatus(@NotNull UUID orderId, @NotNull StockConfig.UpdateOrder.Status status);
 
     boolean existsByOrderId(UUID id);
 }

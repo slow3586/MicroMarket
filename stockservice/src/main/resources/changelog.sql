@@ -13,11 +13,11 @@ CREATE TABLE stock_update
 
 CREATE TABLE stock_update_order
 (
-    id         UUID    NOT NULL,
-    product_id UUID    NOT NULL,
-    order_id   UUID    NOT NULL,
-    value      INTEGER NOT NULL,
-    status     VARCHAR(255),
+    id         UUID         NOT NULL,
+    product_id UUID         NOT NULL,
+    order_id   UUID         NOT NULL,
+    value      INTEGER      NOT NULL,
+    status     VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT pk_stock_update_order PRIMARY KEY (id)
 );

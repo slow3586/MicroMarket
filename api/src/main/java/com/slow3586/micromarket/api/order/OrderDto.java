@@ -1,6 +1,6 @@
 package com.slow3586.micromarket.api.order;
 
-import com.slow3586.micromarket.api.balance.BalanceTransferDto;
+import com.slow3586.micromarket.api.balance.BalanceUpdateOrderDto;
 import com.slow3586.micromarket.api.delivery.DeliveryDto;
 import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.stock.StockUpdateOrderDto;
@@ -19,11 +19,11 @@ public class OrderDto implements Serializable {
     UserDto buyer;
     ProductDto product;
     int quantity;
-    OrderTopics.Status status;
+    OrderConfig.Status status;
     String error;
     Instant createdAt;
 
     StockUpdateOrderDto stockChange;
-    BalanceTransferDto balanceTransfer;
+    BalanceUpdateOrderDto balanceTransfer;
     DeliveryDto delivery;
 }

@@ -1,11 +1,11 @@
 package com.slow3586.micromarket.deliveryservice;
 
 
+import com.slow3586.micromarket.api.balance.BalanceConfig;
+import com.slow3586.micromarket.api.balance.BalanceUpdateOrderDto;
+import com.slow3586.micromarket.api.delivery.DeliveryConfig;
 import com.slow3586.micromarket.api.delivery.DeliveryDto;
-import com.slow3586.micromarket.api.delivery.DeliveryTopics;
 import com.slow3586.micromarket.api.order.OrderClient;
-import com.slow3586.micromarket.api.order.OrderDto;
-import com.slow3586.micromarket.api.order.OrderTopics;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,18 +33,18 @@ public class DeliveryService {
     public DeliveryDto updateDeliverySent(UUID deliveryId) {
         final Delivery delivery = deliveryRepository.findById(deliveryId).orElseThrow();
 
-        if (!delivery.getStatus().equals("AWAITING")) {
+        if (!delivery.getStatus().equals(DeliveryConfig.Status.AWAITING)) {
             throw new AccessDeniedException("Некорректный статус доставки!");
         }
 
         final DeliveryDto deliveryDto = deliveryMapper.toDto(
             deliveryRepository.save(
-                delivery.setStatus("SENT")
+                delivery.setStatus(DeliveryConfig.Status.SENT)
                     .setReceivedAt(Instant.now())));
 
         kafkaTemplate.executeInTransaction(kafkaOperations ->
             kafkaOperations.send(
-                DeliveryTopics.Status.SENT,
+                DeliveryConfig.TOPIC,
                 deliveryDto.getId(),
                 deliveryDto
             ));
@@ -55,18 +55,18 @@ public class DeliveryService {
     public DeliveryDto updateDeliveryReceived(UUID deliveryId) {
         final Delivery delivery = deliveryRepository.findById(deliveryId).orElseThrow();
 
-        if (!delivery.getStatus().equals("SENT")) {
+        if (!delivery.getStatus().equals(DeliveryConfig.Status.SENT)) {
             throw new AccessDeniedException("Некорректный статус доставки!");
         }
 
         final DeliveryDto deliveryDto = deliveryMapper.toDto(
             deliveryRepository.save(
-                delivery.setStatus("RECEIVED")
+                delivery.setStatus(DeliveryConfig.Status.RECEIVED)
                     .setReceivedAt(Instant.now())));
 
         kafkaTemplate.executeInTransaction(kafkaOperations ->
             kafkaOperations.send(
-                DeliveryTopics.Status.RECEIVED,
+                DeliveryConfig.TOPIC,
                 deliveryDto.getId(),
                 deliveryDto
             ));
@@ -77,18 +77,18 @@ public class DeliveryService {
     public DeliveryDto updateDeliveryCancelled(UUID deliveryId) {
         final Delivery delivery = deliveryRepository.findById(deliveryId).orElseThrow();
 
-        if (!delivery.getStatus().equals("AWAITING")) {
+        if (!delivery.getStatus().equals(DeliveryConfig.Status.AWAITING)) {
             throw new AccessDeniedException("Некорректный статус доставки!");
         }
 
         final DeliveryDto deliveryDto = deliveryMapper.toDto(
             deliveryRepository.save(
-                delivery.setStatus("CANCELLED")
+                delivery.setStatus(DeliveryConfig.Status.CANCELLED)
                     .setReceivedAt(Instant.now())));
 
         kafkaTemplate.executeInTransaction(kafkaOperations ->
             kafkaOperations.send(
-                DeliveryTopics.Status.RECEIVED,
+                DeliveryConfig.TOPIC,
                 deliveryDto.getId(),
                 deliveryDto
             ));
@@ -96,23 +96,25 @@ public class DeliveryService {
         return deliveryDto;
     }
 
-    @KafkaListener(topics = OrderTopics.Payment.RESERVED,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderPaymentReserved(OrderDto order) {
-        if (deliveryRepository.existsByOrderId(order.getId())) {
+    @KafkaListener(topics = BalanceConfig.BalanceUpdateOrder.TOPIC)
+    public void processBalanceUpdateOrderReserved(final BalanceUpdateOrderDto balanceUpdateOrder) {
+        if (!BalanceConfig.BalanceUpdateOrder.Status.RESERVED.equals(balanceUpdateOrder.getStatus())) {
+            return;
+        }
+        if (deliveryRepository.existsByOrderId(balanceUpdateOrder.getOrderId())) {
             return;
         }
 
         final Delivery delivery = deliveryRepository.save(
             new Delivery()
                 .setCreatedAt(Instant.now())
-                .setStatus("AWAITING")
-                .setOrderId(order.getId()));
+                .setStatus(DeliveryConfig.Status.AWAITING)
+                .setOrderId(balanceUpdateOrder.getOrderId()));
 
         kafkaTemplate.send(
-            OrderTopics.Delivery.AWAITING,
-            order.getId(),
-            order.setDelivery(deliveryMapper.toDto(delivery)));
+            DeliveryConfig.TOPIC,
+            delivery.getId(),
+            deliveryMapper.toDto(delivery));
     }
 
     public DeliveryDto getDelivery(UUID deliveryId) {

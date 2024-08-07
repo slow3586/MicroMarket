@@ -34,7 +34,6 @@ public class Notification extends DefaultEntity {
     UUID userId;
     @NotBlank
     String text;
-    @NotNull
     @CreationTimestamp
     Instant createdAt;
 }

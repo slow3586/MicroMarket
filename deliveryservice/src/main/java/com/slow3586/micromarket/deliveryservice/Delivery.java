@@ -1,10 +1,13 @@
 package com.slow3586.micromarket.deliveryservice;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
+import com.slow3586.micromarket.api.delivery.DeliveryConfig;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,8 +37,8 @@ public class Delivery extends DefaultEntity {
     @Column(unique = true)
     UUID orderId;
     @NotNull
-    String status;
-    @NotNull
+    @Enumerated(EnumType.STRING)
+    DeliveryConfig.Status status;
     @CreationTimestamp
     Instant createdAt;
     Instant sentAt;

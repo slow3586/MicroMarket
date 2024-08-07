@@ -1,10 +1,10 @@
 package com.slow3586.micromarket.stockservice;
 
 
+import com.slow3586.micromarket.api.stock.CreateStockUpdateRequest;
 import com.slow3586.micromarket.api.stock.StockClient;
 import com.slow3586.micromarket.api.stock.StockUpdateDto;
 import com.slow3586.micromarket.api.stock.StockUpdateOrderDto;
-import com.slow3586.micromarket.api.stock.StockUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class StockController implements StockClient {
 
     @PostMapping("update")
     @PreAuthorize("hasAnyAuthority('USER')")
-    public StockUpdateDto updateStock(@RequestBody @Valid StockUpdateRequest request) {
-        return stockService.updateStock(request);
+    public StockUpdateDto createStockUpdate(@RequestBody @Valid CreateStockUpdateRequest request) {
+        return stockService.createStockUpdate(request);
     }
 }

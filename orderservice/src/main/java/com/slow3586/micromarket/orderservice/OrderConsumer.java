@@ -1,7 +1,15 @@
 package com.slow3586.micromarket.orderservice;
 
-import com.slow3586.micromarket.api.order.OrderDto;
-import com.slow3586.micromarket.api.order.OrderTopics;
+
+import com.slow3586.micromarket.api.balance.BalanceConfig;
+import com.slow3586.micromarket.api.balance.BalanceUpdateOrderDto;
+import com.slow3586.micromarket.api.delivery.DeliveryClient;
+import com.slow3586.micromarket.api.delivery.DeliveryConfig;
+import com.slow3586.micromarket.api.delivery.DeliveryDto;
+import com.slow3586.micromarket.api.order.OrderConfig;
+import com.slow3586.micromarket.api.product.ProductClient;
+import com.slow3586.micromarket.api.stock.StockClient;
+import com.slow3586.micromarket.api.user.UserClient;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,54 +28,69 @@ import java.util.UUID;
 @Transactional(transactionManager = "transactionManager")
 public class OrderConsumer {
     OrderRepository orderRepository;
+    OrderMapper orderMapper;
     KafkaTemplate<UUID, Object> kafkaTemplate;
-    OrderService orderService;
+    ProductClient productClient;
+    UserClient userClient;
+    DeliveryClient deliveryClient;
+    StockClient stockClient;
 
-    @KafkaListener(topics = OrderTopics.Payment.AWAITING,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderPaymentAwaiting(OrderDto order) {
-        orderRepository.findById(order.getId())
-            .map(o -> o.setStatus(OrderTopics.Status.PAYMENT_AWAITING))
-            .orElseThrow();
+    @KafkaListener(topics = BalanceConfig.BalanceUpdateOrder.TOPIC)
+    protected void processBalanceUpdateOrder(BalanceUpdateOrderDto balanceUpdateOrder) {
+        if (BalanceConfig.BalanceUpdateOrder.Status.AWAITING.equals(balanceUpdateOrder.getStatus())) {
+            this.processBalanceUpdateOrderAwaiting(balanceUpdateOrder);
+        } else if (BalanceConfig.BalanceUpdateOrder.Status.RESERVED.equals(balanceUpdateOrder.getStatus())) {
+            this.processBalanceUpdateOrderReserved(balanceUpdateOrder);
+        }
     }
 
-    @KafkaListener(topics = OrderTopics.Payment.RESERVED,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderPaymentReserved(OrderDto order) {
-        orderRepository.findById(order.getId())
-            .map(o -> o.setStatus(OrderTopics.Status.PAYMENT_RESERVED))
-            .orElseThrow();
+    protected void processBalanceUpdateOrderAwaiting(BalanceUpdateOrderDto balanceUpdateOrder) {
+        orderRepository.findByIdAndStatus(
+            balanceUpdateOrder.getOrderId(),
+            OrderConfig.Status.CREATED
+        ).ifPresent(o -> o.setStatus(OrderConfig.Status.PAYMENT_AWAITING));
     }
 
-    @KafkaListener(topics = OrderTopics.Delivery.AWAITING,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderDeliveryAwaiting(OrderDto order) {
-        orderRepository.findById(order.getId())
-            .map(o -> o.setStatus(OrderTopics.Status.DELIVERY_AWAITING))
-            .orElseThrow();
+    protected void processBalanceUpdateOrderReserved(BalanceUpdateOrderDto balanceUpdateOrder) {
+        orderRepository.findByIdAndStatus(
+            balanceUpdateOrder.getOrderId(),
+            OrderConfig.Status.CREATED
+        ).ifPresent(o -> o.setStatus(OrderConfig.Status.PAYMENT_RESERVED));
+        orderRepository.findByIdAndStatus(
+            balanceUpdateOrder.getOrderId(),
+            OrderConfig.Status.PAYMENT_AWAITING
+        ).ifPresent(o -> o.setStatus(OrderConfig.Status.PAYMENT_RESERVED));
     }
 
-    @KafkaListener(topics = OrderTopics.Delivery.SENT,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderDeliverySent(OrderDto order) {
-        orderRepository.findById(order.getId())
-            .map(o -> o.setStatus(OrderTopics.Status.DELIVERY_SENT))
-            .orElseThrow();
+    @KafkaListener(topics = DeliveryConfig.TOPIC)
+    public void processDelivery(DeliveryDto delivery) {
+        if (DeliveryConfig.Status.AWAITING.equals(delivery.getStatus())) {
+            this.processDeliveryAwaiting(delivery);
+        } else if (DeliveryConfig.Status.SENT.equals(delivery.getStatus())) {
+            this.processDeliverySent(delivery);
+        } else if (DeliveryConfig.Status.RECEIVED.equals(delivery.getStatus())) {
+            this.processDeliveryReceived(delivery);
+        }
     }
 
-    @KafkaListener(topics = OrderTopics.Delivery.RECEIVED,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderDeliveryReceived(OrderDto order) {
-        orderRepository.findById(order.getId())
-            .map(o -> o.setStatus(OrderTopics.Status.DELIVERY_RECEIVED))
-            .orElseThrow();
+    public void processDeliveryAwaiting(DeliveryDto delivery) {
+        orderRepository.findByIdAndStatus(
+            delivery.getOrder().getId(),
+            OrderConfig.Status.PAYMENT_RESERVED
+        ).ifPresent(o -> o.setStatus(OrderConfig.Status.DELIVERY_AWAITING));
     }
 
-    @KafkaListener(topics = OrderTopics.ERROR)
-    public void processOrderError(OrderDto order) {
-        orderRepository.findById(order.getId())
-            .map(entity -> order.setStatus(OrderTopics.Status.ERROR)
-                .setError(order.getError()))
-            .orElseThrow();
+    public void processDeliverySent(DeliveryDto delivery) {
+        orderRepository.findByIdAndStatus(
+            delivery.getOrder().getId(),
+            OrderConfig.Status.DELIVERY_AWAITING
+        ).ifPresent(o -> o.setStatus(OrderConfig.Status.DELIVERY_SENT));
+    }
+
+    public void processDeliveryReceived(DeliveryDto delivery) {
+        orderRepository.findByIdAndStatus(
+            delivery.getOrder().getId(),
+            OrderConfig.Status.DELIVERY_SENT
+        ).ifPresent(o -> o.setStatus(OrderConfig.Status.COMPLETED));
     }
 }

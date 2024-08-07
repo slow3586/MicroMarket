@@ -1,24 +1,23 @@
 package com.slow3586.micromarket.balanceservice;
 
 
-import com.slow3586.micromarket.api.balance.BalanceReplenishDto;
-import com.slow3586.micromarket.api.balance.BalanceTopics;
-import com.slow3586.micromarket.api.balance.BalanceTransferDto;
-import com.slow3586.micromarket.api.balance.CreateBalanceReplenishRequest;
-import com.slow3586.micromarket.api.order.OrderDto;
-import com.slow3586.micromarket.api.order.OrderTopics;
-import com.slow3586.micromarket.balanceservice.entity.BalanceReplenish;
-import com.slow3586.micromarket.balanceservice.entity.BalanceTransfer;
-import com.slow3586.micromarket.balanceservice.mapper.BalanceReplenishMapper;
-import com.slow3586.micromarket.balanceservice.mapper.BalanceTransferMapper;
-import com.slow3586.micromarket.balanceservice.repository.BalanceReplenishRepository;
-import com.slow3586.micromarket.balanceservice.repository.BalanceTransferRepository;
+import com.slow3586.micromarket.api.balance.BalanceConfig;
+import com.slow3586.micromarket.api.balance.CreateBalanceUpdateRequest;
+import com.slow3586.micromarket.api.order.OrderClient;
+import com.slow3586.micromarket.api.product.ProductClient;
+import com.slow3586.micromarket.balanceservice.entity.BalanceUpdate;
+import com.slow3586.micromarket.balanceservice.mapper.BalanceUpdateMapper;
+import com.slow3586.micromarket.balanceservice.mapper.BalanceUpdateOrderMapper;
+import com.slow3586.micromarket.balanceservice.repository.BalanceUpdateOrderRepository;
+import com.slow3586.micromarket.balanceservice.repository.BalanceUpdateRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,15 +34,18 @@ import java.util.stream.Stream;
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @Transactional(transactionManager = "transactionManager")
 public class BalanceService {
-    BalanceReplenishRepository balanceReplenishRepository;
-    BalanceReplenishMapper balanceReplenishMapper;
-    BalanceTransferRepository balanceTransferRepository;
-    BalanceTransferMapper balanceTransferMapper;
+    BalanceUpdateRepository balanceUpdateRepository;
+    BalanceUpdateMapper balanceUpdateMapper;
+    BalanceUpdateOrderRepository balanceUpdateOrderRepository;
+    BalanceUpdateOrderMapper balanceUpdateOrderMapper;
     KafkaTemplate<UUID, Object> kafkaTemplate;
+    OrderClient orderClient;
+    ProductClient productClient;
+    CacheManager cacheManager;
 
-    public UUID createBalanceReplenish(final CreateBalanceReplenishRequest request) {
-        final BalanceReplenish balanceReplenish = balanceReplenishRepository.save(
-            new BalanceReplenish()
+    public UUID createBalanceUpdate(final CreateBalanceUpdateRequest request) {
+        final BalanceUpdate balanceUpdate = balanceUpdateRepository.save(
+            new BalanceUpdate()
                 .setUserId(request.getUserId())
                 .setCreatedAt(Instant.now())
                 .setValue(request.getValue()));
@@ -51,94 +53,38 @@ public class BalanceService {
         kafkaTemplate.executeInTransaction(
             (kafkaOperations) ->
                 kafkaOperations.send(
-                    BalanceTopics.Replenish.NEW,
-                    balanceReplenish.getUserId(),
-                    balanceReplenishMapper.toDto(balanceReplenish)));
+                    BalanceConfig.BalanceUpdate.TOPIC,
+                    balanceUpdate.getUserId(),
+                    balanceUpdateMapper.toDto(balanceUpdate)));
 
-        return balanceReplenish.getId();
-    }
+        this.resetUserCache(request.getUserId());
 
-    @KafkaListener(topics = OrderTopics.Initialization.STOCK,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    protected void processOrderCreated(OrderDto order) {
-        if (balanceTransferRepository.existsByOrderId(order.getId())) {
-            return;
-        }
-
-        final int total = order.getQuantity() * order.getProduct().getPrice();
-        final long userBalance = this.getBalanceSumByUserId(order.getBuyer().getId());
-        final boolean enoughBalance = total <= userBalance;
-
-        final BalanceTransfer balanceTransfer =
-            balanceTransferRepository.save(
-                new BalanceTransfer()
-                    .setValue(total)
-                    .setStatus(enoughBalance ? BalanceTopics.Status.RESERVED : BalanceTopics.Status.AWAITING)
-                    .setSenderId(order.getBuyer().getId())
-                    .setReceiverId(order.getProduct().getSeller().getId())
-                    .setOrderId(order.getId())
-                    .setCreatedAt(Instant.now()));
-
-        final BalanceTransferDto balanceTransferDto =
-            balanceTransferMapper.toDto(balanceTransfer);
-
-        kafkaTemplate.send(
-            enoughBalance ? OrderTopics.Payment.RESERVED : OrderTopics.Payment.AWAITING,
-            order.getId(),
-            order.setBalanceTransfer(balanceTransferDto));
-    }
-
-    @KafkaListener(topics = OrderTopics.ERROR)
-    protected void processOrderError(final OrderDto order) {
-        balanceTransferRepository.findAllByOrderId(order.getId())
-            .forEach(balanceTransfer -> balanceTransfer.setStatus(BalanceTopics.Status.CANCELLED));
-    }
-
-    @KafkaListener(topics = BalanceTopics.Replenish.NEW)
-    protected void processBalanceReplenishCreated(final BalanceReplenishDto balanceReplenishDto) {
-        balanceTransferRepository.findAllAwaitingByUserId(
-            balanceReplenishDto.getUserId()
-        ).forEach(balanceTransfer ->
-            this.processBalanceTransferAwaitingPayment(
-                balanceTransferMapper.toDto(balanceTransfer)));
-    }
-
-    @KafkaListener(topics = BalanceTopics.Payment.AWAITING)
-    protected void processBalanceTransferAwaitingPayment(final BalanceTransferDto balanceTransferDto) {
-        final long senderBalance = this.getBalanceSumByUserId(balanceTransferDto.getSenderId());
-
-        if (senderBalance >= balanceTransferDto.getValue()) {
-            final BalanceTransferDto balanceTransfer =
-                balanceTransferRepository
-                    .findById(balanceTransferDto.getId())
-                    .map(t -> t.setStatus(BalanceTopics.Status.RESERVED))
-                    .map(balanceTransferRepository::save)
-                    .map(balanceTransferMapper::toDto)
-                    .orElseThrow();
-
-            kafkaTemplate.send(
-                BalanceTopics.Payment.RESERVED,
-                balanceTransfer.getId(),
-                balanceTransfer);
-        }
+        return balanceUpdate.getId();
     }
 
     @Cacheable(value = "getBalanceSumByUserId", key = "#userId")
     public long getBalanceSumByUserId(final UUID userId) {
-        return balanceReplenishRepository.sumAllByUserId(userId)
-            + balanceTransferRepository.sumAllPositiveByUserId(userId)
-            - balanceTransferRepository.sumAllNegativeByUserId(userId);
+        return balanceUpdateRepository.sumAllByUserId(userId)
+               + balanceUpdateOrderRepository.sumAllPositiveByUserId(userId)
+               - balanceUpdateOrderRepository.sumAllNegativeByUserId(userId);
     }
 
     @Cacheable(value = "getAllBalanceChangesByUserId", key = "#userId")
     public List<Serializable> getAllBalanceChangesByUserId(UUID userId) {
         return Stream.concat(
-            balanceReplenishRepository.findAllByUserId(userId)
+            balanceUpdateRepository.findAllByUserId(userId)
                 .stream()
-                .map(balanceReplenishMapper::toDto),
-            balanceTransferRepository.findAllByUserId(userId)
+                .map(balanceUpdateMapper::toDto),
+            balanceUpdateOrderRepository.findAllByUserId(userId)
                 .stream()
-                .map(balanceTransferMapper::toDto)
+                .map(balanceUpdateOrderMapper::toDto)
         ).toList();
     }
+
+
+    @Caching(evict = {
+        @CacheEvict(value = "getBalanceSumByUserId", key = "#userId"),
+        @CacheEvict(value = "getAllBalanceChangesByUserId", key = "#userId")
+    })
+    public void resetUserCache(final UUID userId) {}
 }

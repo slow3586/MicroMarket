@@ -23,5 +23,5 @@ public interface StockClient {
     StockUpdateOrderDto getStockOrderChangeByOrderId(@PathVariable UUID orderId);
 
     @PostMapping("update")
-    StockUpdateDto updateStock(@RequestBody @Valid StockUpdateRequest request);
+    StockUpdateDto createStockUpdate(@RequestBody @Valid CreateStockUpdateRequest request);
 }

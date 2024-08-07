@@ -13,6 +13,7 @@ public class StockUpdateOrderDto implements Serializable {
     UUID id;
     UUID productId;
     UUID orderId;
+    StockConfig.UpdateOrder.Status status;
     int value;
     Instant createdAt;
 }

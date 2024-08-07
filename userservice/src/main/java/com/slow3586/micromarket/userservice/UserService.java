@@ -1,8 +1,6 @@
 package com.slow3586.micromarket.userservice;
 
 
-import com.slow3586.micromarket.api.order.OrderDto;
-import com.slow3586.micromarket.api.order.OrderTopics;
 import com.slow3586.micromarket.api.user.LoginRequest;
 import com.slow3586.micromarket.api.user.RegisterUserRequest;
 import com.slow3586.micromarket.api.user.UserDto;
@@ -14,7 +12,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,21 +35,6 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     SecretKey secretKey;
     KafkaTemplate<UUID, Object> kafkaTemplate;
-
-    @KafkaListener(topics = OrderTopics.Initialization.PRODUCT,
-        errorHandler = "orderTransactionListenerErrorHandler")
-    public void processOrderCreated(OrderDto order) {
-        kafkaTemplate.send(
-            OrderTopics.Initialization.USER,
-            order.getId(),
-            order.setBuyer(userRepository.findById(order.getBuyer().getId())
-                    .map(userMapper::toDto)
-                    .orElseThrow())
-                .setProduct(order.getProduct().setSeller(
-                    userRepository.findById(order.getProduct().getSeller().getId())
-                        .map(userMapper::toDto)
-                        .orElseThrow())));
-    }
 
     public UserDto registerUser(RegisterUserRequest request) {
         User user = userRepository.save(new User()

@@ -2,7 +2,6 @@ package com.slow3586.micromarket.balanceservice.entity;
 
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
 import com.slow3586.micromarket.api.spring.DefaultEntity;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -10,7 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,26 +24,18 @@ import java.util.UUID;
 @Setter
 @ToString
 @Accessors(chain = true)
-@Entity(name = "balance_transfer")
+@Entity(name = "balance_update")
 @EntityListeners(AuditEntityListener.class)
-public class BalanceTransfer extends DefaultEntity {
+public class BalanceUpdate extends DefaultEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     UUID id;
     @NotNull
-    UUID senderId;
-    @NotNull
-    UUID receiverId;
-    @NotNull
-    @Column(unique = true)
-    UUID orderId;
+    UUID userId;
     @Min(1)
     @Max(999999)
     int value;
-    @NotBlank
-    String status;
-    @NotNull
     @CreationTimestamp
     Instant createdAt;
 }
