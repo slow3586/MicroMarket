@@ -1,7 +1,6 @@
 package com.slow3586.micromarket.api.stock;
 
 import jakarta.validation.Valid;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,11 +14,9 @@ import java.util.UUID;
     url = "${app.client.stock}/api/stock")
 public interface StockClient {
     @GetMapping("{productId}")
-    @Cacheable(value = "getStockSumByProductId", key = "#productId")
     long getStockSumByProductId(@PathVariable UUID productId);
 
     @GetMapping("order/{orderId}")
-    @Cacheable(value = "getStockChangeByOrderId", key = "#orderId")
     StockUpdateOrderDto getStockOrderChangeByOrderId(@PathVariable UUID orderId);
 
     @PostMapping("update")

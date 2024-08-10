@@ -32,7 +32,7 @@ public class DefaultKafkaConfig {
             .dltSuffix(".dlt." + applicationName)
             .autoCreateTopics(true, 1, (short) 1)
             .fixedBackOff(1000)
-            .maxAttempts(5)
+            .maxAttempts(1)
             .concurrency(1)
             .retryOn(Throwable.class)
             .create(template);

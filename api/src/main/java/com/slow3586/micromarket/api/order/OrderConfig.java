@@ -1,9 +1,11 @@
 
 package com.slow3586.micromarket.api.order;
 
+import com.slow3586.micromarket.api.spring.DefaultCacheConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin;
 
@@ -11,9 +13,10 @@ import java.util.stream.Stream;
 
 @Configuration
 public class OrderConfig {
-    private static final String NAME = "order";
+    private static final String BASE = "entity.orderservice";
 
-    public final static String TOPIC = NAME + ".table";
+    public final static String TOPIC = BASE + ".order";
+    public final static String TOPIC_TYPE = "spring.json.value.default.type=" + "com.slow3586.micromarket.api.order.OrderDto";
 
     public enum Status {
         TEMPLATE,
@@ -33,5 +36,10 @@ public class OrderConfig {
             ).map(t -> TopicBuilder.name(t).build())
             .toList()
             .toArray(new NewTopic[0]));
+    }
+
+    @Bean
+    public RedisCacheManager orderCacheManager(DefaultCacheConfig defaultCacheConfig) {
+        return defaultCacheConfig.createBasicCacheManager(OrderDto.class);
     }
 }

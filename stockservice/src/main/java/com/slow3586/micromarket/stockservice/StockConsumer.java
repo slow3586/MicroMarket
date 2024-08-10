@@ -34,12 +34,12 @@ public class StockConsumer {
     StockService stockService;
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
-    @KafkaListener(topics = OrderConfig.TOPIC)
+    @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
     protected void processOrder(final OrderDto order) {
         if (OrderConfig.Status.CREATED.equals(order.getStatus())) {
             this.processOrderCreated(order);
         } else if (OrderConfig.Status.CANCELLED.equals(order.getStatus())) {
-            this.processOrderError(order);
+            this.processOrderCancelled(order);
         }
     }
 
@@ -48,39 +48,33 @@ public class StockConsumer {
             return;
         }
 
-        final long stock = stockService.getStockSumByProductId(order.getProduct().getId());
+        final long stock = stockService.getStockSumByProductId(order.getProductId());
 
         if (stock < order.getQuantity()) {
             throw new IllegalStateException("Недостаточно товара");
         }
 
-        final StockUpdateOrder stockUpdateOrder =
-            this.stockUpdateOrderRepository.save(
-                new StockUpdateOrder()
-                    .setStatus(StockConfig.UpdateOrder.Status.RESERVED)
-                    .setProductId(order.getProduct().getId())
-                    .setOrderId(order.getId())
-                    .setValue(order.getQuantity()));
-
-        kafkaTemplate.send(
-            StockConfig.UpdateOrder.TOPIC,
-            stockUpdateOrder.getId(),
-            stockUpdateOrderMapper.toDto(stockUpdateOrder));
+        this.stockUpdateOrderRepository.save(
+            new StockUpdateOrder()
+                .setStatus(StockConfig.StockUpdateOrder.Status.RESERVED)
+                .setProductId(order.getProductId())
+                .setOrderId(order.getId())
+                .setValue(order.getQuantity()));
     }
 
-    protected void processOrderError(OrderDto order) {
+    protected void processOrderCancelled(OrderDto order) {
         stockUpdateOrderRepository.findByOrderIdAndStatus(
-                order.getId(), StockConfig.UpdateOrder.Status.RESERVED)
-            .ifPresent(stockUpdateOrder -> stockUpdateOrder.setStatus(StockConfig.UpdateOrder.Status.CANCELLED));
+                order.getId(), StockConfig.StockUpdateOrder.Status.RESERVED)
+            .ifPresent(stockUpdateOrder -> stockUpdateOrder.setStatus(StockConfig.StockUpdateOrder.Status.CANCELLED));
     }
 
-    @KafkaListener(topics = DeliveryConfig.TOPIC)
+    @KafkaListener(topics = DeliveryConfig.TOPIC, properties = DeliveryConfig.TOPIC_TYPE)
     protected void processDeliverySent(DeliveryDto delivery) {
         if (DeliveryConfig.Status.SENT.equals(delivery.getStatus())) {
             stockUpdateOrderRepository.findByOrderIdAndStatus(
-                delivery.getOrder().getId(),
-                StockConfig.UpdateOrder.Status.RESERVED
-            ).ifPresent(stockUpdateOrder -> stockUpdateOrder.setStatus(StockConfig.UpdateOrder.Status.COMPLETED));
+                delivery.getOrderId(),
+                StockConfig.StockUpdateOrder.Status.RESERVED
+            ).ifPresent(stockUpdateOrder -> stockUpdateOrder.setStatus(StockConfig.StockUpdateOrder.Status.COMPLETED));
         }
     }
 }

@@ -18,7 +18,7 @@ public interface StockUpdateOrderRepository extends JpaRepository<StockUpdateOrd
     long sumAllByProductId(UUID productId);
 
     Optional<StockUpdateOrder> findByOrderId(UUID orderId);
-    Optional<StockUpdateOrder> findByOrderIdAndStatus(@NotNull UUID orderId, @NotNull StockConfig.UpdateOrder.Status status);
+    Optional<StockUpdateOrder> findByOrderIdAndStatus(@NotNull UUID orderId, @NotNull StockConfig.StockUpdateOrder.Status status);
 
     boolean existsByOrderId(UUID id);
 }

@@ -5,6 +5,8 @@ import com.slow3586.micromarket.api.notification.NotificationDto;
 import com.slow3586.micromarket.api.order.OrderClient;
 import com.slow3586.micromarket.api.order.OrderConfig;
 import com.slow3586.micromarket.api.order.OrderDto;
+import com.slow3586.micromarket.api.product.ProductClient;
+import com.slow3586.micromarket.api.product.ProductDto;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,19 +29,21 @@ public class NotificationService {
     NotificationMapper notificationMapper;
     OrderClient orderClient;
     KafkaTemplate<UUID, Object> kafkaTemplate;
+    private final ProductClient productClient;
 
-    @KafkaListener(topics = OrderConfig.TOPIC)
+    @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
     public void processOrder(OrderDto order) {
         if (OrderConfig.Status.PAYMENT_AWAITING.equals(order.getStatus())) {
             notificationRepository.save(new Notification()
-                .setUserId(order.getBuyer().getId())
+                .setUserId(order.getBuyerId())
                 .setText("Вы сделали заказ. Ожидается оплата."));
         } else if (OrderConfig.Status.DELIVERY_AWAITING.equals(order.getStatus())) {
+            final ProductDto product = productClient.getProductById(order.getProductId());
             notificationRepository.save(new Notification()
-                .setUserId(order.getProduct().getSeller().getId())
+                .setUserId(product.getSellerId())
                 .setText("Покупатель оплатил заказ. Необходимо его отправить."));
             notificationRepository.save(new Notification()
-                .setUserId(order.getBuyer().getId())
+                .setUserId(order.getBuyerId())
                 .setText("Вы оплатили заказ."));
         }
     }

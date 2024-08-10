@@ -13,7 +13,7 @@ import java.util.UUID;
     url = "${app.client.user}/api/user")
 public interface UserClient {
     @GetMapping("{uuid}")
-    @Cacheable(value = "getUserById", key = "#uuid")
+    @Cacheable(value = UserConfig.TOPIC, key = "#uuid", cacheManager = "userCacheManager")
     UserDto getUserById(@PathVariable UUID uuid);
 
     @PostMapping("register")

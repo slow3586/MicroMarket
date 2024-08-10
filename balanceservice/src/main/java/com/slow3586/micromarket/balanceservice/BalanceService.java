@@ -1,7 +1,6 @@
 package com.slow3586.micromarket.balanceservice;
 
 
-import com.slow3586.micromarket.api.balance.BalanceConfig;
 import com.slow3586.micromarket.api.balance.CreateBalanceUpdateRequest;
 import com.slow3586.micromarket.api.order.OrderClient;
 import com.slow3586.micromarket.api.product.ProductClient;
@@ -14,9 +13,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -41,7 +38,6 @@ public class BalanceService {
     KafkaTemplate<UUID, Object> kafkaTemplate;
     OrderClient orderClient;
     ProductClient productClient;
-    CacheManager cacheManager;
 
     public UUID createBalanceUpdate(final CreateBalanceUpdateRequest request) {
         final BalanceUpdate balanceUpdate = balanceUpdateRepository.save(
@@ -50,26 +46,18 @@ public class BalanceService {
                 .setCreatedAt(Instant.now())
                 .setValue(request.getValue()));
 
-        kafkaTemplate.executeInTransaction(
-            (kafkaOperations) ->
-                kafkaOperations.send(
-                    BalanceConfig.BalanceUpdate.TOPIC,
-                    balanceUpdate.getUserId(),
-                    balanceUpdateMapper.toDto(balanceUpdate)));
-
         this.resetUserCache(request.getUserId());
 
         return balanceUpdate.getId();
     }
 
-    @Cacheable(value = "getBalanceSumByUserId", key = "#userId")
+    //@Cacheable(value = "getBalanceSumByUserId", key = "#userId")
     public long getBalanceSumByUserId(final UUID userId) {
         return balanceUpdateRepository.sumAllByUserId(userId)
                + balanceUpdateOrderRepository.sumAllPositiveByUserId(userId)
                - balanceUpdateOrderRepository.sumAllNegativeByUserId(userId);
     }
 
-    @Cacheable(value = "getAllBalanceChangesByUserId", key = "#userId")
     public List<Serializable> getAllBalanceChangesByUserId(UUID userId) {
         return Stream.concat(
             balanceUpdateRepository.findAllByUserId(userId)
@@ -80,7 +68,6 @@ public class BalanceService {
                 .map(balanceUpdateOrderMapper::toDto)
         ).toList();
     }
-
 
     @Caching(evict = {
         @CacheEvict(value = "getBalanceSumByUserId", key = "#userId"),

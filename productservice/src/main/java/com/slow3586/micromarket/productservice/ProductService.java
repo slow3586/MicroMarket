@@ -2,6 +2,7 @@ package com.slow3586.micromarket.productservice;
 
 
 import com.slow3586.micromarket.api.product.CreateProductRequest;
+import com.slow3586.micromarket.api.product.ProductConfig;
 import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.product.ProductQuery;
 import com.slow3586.micromarket.api.user.UserClient;
@@ -39,7 +40,7 @@ public class ProductService {
                     .setPrice(request.getPrice())));
     }
 
-    @Cacheable(value = "getProductById", key = "#productId")
+    @Cacheable(value = ProductConfig.TOPIC, key = "#productId", cacheManager = "productCacheManager")
     public ProductDto getProductById(final UUID productId) {
         return productRepository.findById(productId)
             .map(productMapper::toDto)

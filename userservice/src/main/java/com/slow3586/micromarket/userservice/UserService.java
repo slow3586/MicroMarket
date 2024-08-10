@@ -3,6 +3,7 @@ package com.slow3586.micromarket.userservice;
 
 import com.slow3586.micromarket.api.user.LoginRequest;
 import com.slow3586.micromarket.api.user.RegisterUserRequest;
+import com.slow3586.micromarket.api.user.UserConfig;
 import com.slow3586.micromarket.api.user.UserDto;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -12,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,12 +39,13 @@ public class UserService {
     KafkaTemplate<UUID, Object> kafkaTemplate;
 
     public UserDto registerUser(RegisterUserRequest request) {
-        User user = userRepository.save(new User()
-            .setName(request.getLogin())
-            .setLogin(request.getLogin())
-            .setPassword(passwordEncoder.encode(request.getPassword())));
-
-        return userMapper.toDto(user);
+        return userMapper.toDto(
+            userRepository.save(
+                new User()
+                    .setName(request.getLogin())
+                    .setLogin(request.getLogin())
+                    .setPassword(passwordEncoder.encode(
+                        request.getPassword()))));
     }
 
     public String login(LoginRequest request) {
@@ -71,17 +74,19 @@ public class UserService {
             .parseSignedClaims(token)
             .getPayload();
 
-        final User user = userRepository.findByLogin("login").orElseThrow();
-
         if (Instant.now().isAfter(claims.getExpiration().toInstant())) {
             throw new IllegalArgumentException("Token expired!");
         }
 
-        return userMapper.toDto(user);
+        return userMapper.toDto(
+            userRepository
+                .findByLogin("login")
+                .orElseThrow());
     }
 
-    public UserDto getUserById(UUID uuid) {
-        return userRepository.findById(uuid)
+    @Cacheable(value = UserConfig.TOPIC, key = "#userId", cacheManager = "userCacheManager")
+    public UserDto getUserById(UUID userId) {
+        return userRepository.findById(userId)
             .map(userMapper::toDto)
             .orElseThrow();
     }

@@ -35,7 +35,7 @@ public class OrderConsumer {
     DeliveryClient deliveryClient;
     StockClient stockClient;
 
-    @KafkaListener(topics = BalanceConfig.BalanceUpdateOrder.TOPIC)
+    @KafkaListener(topics = BalanceConfig.BalanceUpdateOrder.TOPIC, properties = BalanceConfig.BalanceUpdateOrder.TOPIC_TYPE)
     protected void processBalanceUpdateOrder(BalanceUpdateOrderDto balanceUpdateOrder) {
         if (BalanceConfig.BalanceUpdateOrder.Status.AWAITING.equals(balanceUpdateOrder.getStatus())) {
             this.processBalanceUpdateOrderAwaiting(balanceUpdateOrder);
@@ -62,7 +62,7 @@ public class OrderConsumer {
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.PAYMENT_RESERVED));
     }
 
-    @KafkaListener(topics = DeliveryConfig.TOPIC)
+    @KafkaListener(topics = DeliveryConfig.TOPIC, properties = DeliveryConfig.TOPIC_TYPE)
     public void processDelivery(DeliveryDto delivery) {
         if (DeliveryConfig.Status.AWAITING.equals(delivery.getStatus())) {
             this.processDeliveryAwaiting(delivery);
@@ -75,21 +75,21 @@ public class OrderConsumer {
 
     public void processDeliveryAwaiting(DeliveryDto delivery) {
         orderRepository.findByIdAndStatus(
-            delivery.getOrder().getId(),
+            delivery.getOrderId(),
             OrderConfig.Status.PAYMENT_RESERVED
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.DELIVERY_AWAITING));
     }
 
     public void processDeliverySent(DeliveryDto delivery) {
         orderRepository.findByIdAndStatus(
-            delivery.getOrder().getId(),
+            delivery.getOrderId(),
             OrderConfig.Status.DELIVERY_AWAITING
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.DELIVERY_SENT));
     }
 
     public void processDeliveryReceived(DeliveryDto delivery) {
         orderRepository.findByIdAndStatus(
-            delivery.getOrder().getId(),
+            delivery.getOrderId(),
             OrderConfig.Status.DELIVERY_SENT
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.COMPLETED));
     }

@@ -34,6 +34,7 @@ public class User extends DefaultEntity {
     String login;
     @NotBlank
     String password;
+    @Column(unique=true)
     @Length(min = 4, max = 16)
     String name;
 }

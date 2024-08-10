@@ -27,9 +27,9 @@ import java.util.UUID;
 public class UserController implements UserClient {
     UserService userService;
 
-    @GetMapping("{uuid}")
-    public UserDto getUserById(@PathVariable UUID uuid) {
-        return userService.getUserById(uuid);
+    @GetMapping("{userId}")
+    public UserDto getUserById(@PathVariable UUID userId) {
+        return userService.getUserById(userId);
     }
 
     @PostMapping("register")

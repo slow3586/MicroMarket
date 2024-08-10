@@ -37,9 +37,20 @@ spring:
         fetch.max.wait.ms: 50
         fetch.min.bytes: 1048576
         processing.guarantee: exactly_once
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.UUIDDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.type.mapping: >
+          entity.balanceservice.balance_update:com.slow3586.micromarket.api.balance.BalanceUpdateDto,
+          entity.balanceservice.balance_update_order:com.slow3586.micromarket.api.balance.BalanceUpdateOrderDto,
+          entity.deliveryservice.delivery:com.slow3586.micromarket.api.delivery.DeliveryDto,
+          entity.orderservice.order:com.slow3586.micromarket.api.order.OrderDto,
+          entity.productservice.product:com.slow3586.micromarket.api.product.ProductDto,
+          entity.stockservice.stock_update:com.slow3586.micromarket.api.stock.StockUpdateDto,
+          entity.stockservice.stock_update_order:com.slow3586.micromarket.api.stock.StockUpdateOrderDto,
+          entity.userservice.user:com.slow3586.micromarket.api.user.UserDto
       group-id: '${spring.application.name}'
-      key-deserializer: org.apache.kafka.common.serialization.UUIDDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       fetch-min-size: 1MB
       fetch-max-wait: 50ms
     streams:

@@ -10,3 +10,9 @@ CREATE TABLE "user"
     name     VARCHAR(16),
     CONSTRAINT pk_user PRIMARY KEY (id)
 );
+
+ALTER TABLE "user"
+    ADD CONSTRAINT uc_user_login UNIQUE (login);
+
+ALTER TABLE "user"
+    ADD CONSTRAINT uc_user_name UNIQUE (name);

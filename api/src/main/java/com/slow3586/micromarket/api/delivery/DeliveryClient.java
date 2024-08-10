@@ -13,7 +13,7 @@ import java.util.UUID;
     url = "${app.client.delivery}/api/delivery")
 public interface DeliveryClient {
     @GetMapping("{deliveryId}")
-    @Cacheable(value = "getDeliveryById", key = "#deliveryId")
+    @Cacheable(value = DeliveryConfig.TOPIC, key = "#deliveryId", cacheManager = "deliveryCacheManager")
     DeliveryDto getDeliveryById(@PathVariable UUID deliveryId);
 
     @PostMapping("update/sent/{deliveryId}")

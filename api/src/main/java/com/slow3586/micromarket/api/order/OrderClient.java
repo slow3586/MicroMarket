@@ -15,7 +15,7 @@ import java.util.UUID;
     url = "${app.client.order}/api/order")
 public interface OrderClient {
     @GetMapping("{orderId}")
-    @Cacheable(value = "getOrderById", key = "#orderId")
+    @Cacheable(value = OrderConfig.TOPIC, key = "#orderId", cacheManager = "orderCacheManager")
     OrderDto getOrderById(@PathVariable UUID orderId);
 
     @PostMapping("create")

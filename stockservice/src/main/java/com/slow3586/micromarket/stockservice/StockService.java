@@ -1,7 +1,6 @@
 package com.slow3586.micromarket.stockservice;
 
 
-import com.slow3586.micromarket.api.order.OrderClient;
 import com.slow3586.micromarket.api.product.ProductClient;
 import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.stock.CreateStockUpdateRequest;
@@ -17,7 +16,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -37,12 +35,11 @@ public class StockService {
     StockUpdateOrderMapper stockUpdateOrderMapper;
     ProductClient productClient;
     KafkaTemplate<UUID, Object> kafkaTemplate;
-    OrderClient orderClient;
 
     public StockUpdateDto createStockUpdate(CreateStockUpdateRequest request) {
         final UUID userId = SecurityUtils.getPrincipalId();
         final ProductDto product = productClient.getProductById(request.getProductId());
-        if (!userId.equals(product.getSeller().getId())) {
+        if (!userId.equals(product.getSellerId())) {
             throw new AccessDeniedException("У пользователя нет доступа к этому товару");
         }
 
@@ -54,13 +51,13 @@ public class StockService {
         return stockUpdateMapper.toDto(entity);
     }
 
-    @Cacheable(value = "getStockSumByProductId", key = "#productId")
+    //@Cacheable(value = "getStockSumByProductId", key = "#productId")
     public long getStockSumByProductId(UUID productId) {
         return stockUpdateRepository.sumAllByProductId(productId)
             - stockUpdateOrderRepository.sumAllByProductId(productId);
     }
 
-    @Cacheable(value = "getStockOrderChangeByOrderId", key = "#orderId")
+    //@Cacheable(value = "getStockOrderChangeByOrderId", key = "#orderId")
     public StockUpdateOrderDto getStockOrderChangeByOrderId(UUID orderId) {
         return stockUpdateOrderRepository.findByOrderId(orderId)
             .map(stockUpdateOrderMapper::toDto)

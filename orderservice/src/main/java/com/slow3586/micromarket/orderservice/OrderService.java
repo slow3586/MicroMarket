@@ -14,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -36,16 +37,12 @@ public class OrderService {
     DeliveryClient deliveryClient;
     StockClient stockClient;
 
+    @Cacheable(value = OrderConfig.TOPIC, key = "#orderId", cacheManager = "orderCacheManager")
     public OrderDto getOrderById(UUID orderId) {
-        final OrderDto orderDto = orderRepository
+        return orderRepository
             .findById(orderId)
             .map(orderMapper::toDto)
             .orElseThrow();
-
-        orderDto.setBuyer(userClient.getUserById(orderDto.getBuyer().getId()));
-        orderDto.setProduct(productClient.getProductById(orderDto.getProduct().getId()));
-
-        return orderDto;
     }
 
     public OrderDto createOrder(CreateOrderRequest request) {
@@ -55,30 +52,15 @@ public class OrderService {
             .setQuantity(request.getQuantity())
             .setStatus(OrderConfig.Status.CREATED));
 
-        final OrderDto dto = orderMapper.toDto(order);
-
-        kafkaTemplate.executeInTransaction((kafkaOperations) ->
-            kafkaOperations.send(
-                OrderConfig.TOPIC,
-                order.getId(),
-                dto));
-
-        return dto;
+        return orderMapper.toDto(order);
     }
 
     public OrderDto updateOrderCancelled(UUID orderId) {
-        final OrderDto orderDto = orderRepository
+        return orderRepository
             .findById(orderId)
             .map(o -> o.setStatus(OrderConfig.Status.CANCELLED))
             .map(orderMapper::toDto)
             .orElseThrow();
-
-        kafkaTemplate.executeInTransaction((kafkaOperations) ->
-            kafkaOperations.send(OrderConfig.TOPIC,
-                orderDto.getId(),
-                orderDto));
-
-        return orderDto;
     }
 
     @Async

@@ -1,0 +1,14 @@
+{
+  "name": "redissinkconnector",
+  "config": {
+    "connector.class": "com.redis.kafka.connect.RedisSinkConnector",
+    "tasks.max": "1",
+    "topics.regex": "entity.(.*)",
+    "redis.uri": "redis://redis:6379",
+    "redis.command": "SET",
+    "redis.separator": "::",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter.schemas.enable": "false"
+  }
+}

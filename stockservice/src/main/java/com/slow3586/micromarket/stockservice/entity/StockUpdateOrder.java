@@ -42,7 +42,7 @@ public class StockUpdateOrder extends DefaultEntity {
     int value;
     @NotNull
     @Enumerated(EnumType.STRING)
-    StockConfig.UpdateOrder.Status status;
+    StockConfig.StockUpdateOrder.Status status;
     @CreationTimestamp
     Instant createdAt;
 }

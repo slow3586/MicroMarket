@@ -9,15 +9,14 @@ x-logging: &logging
 x-healthcheck: &healthcheck
   interval: 5s
   timeout: 5s
-  retries: 30
-  start_period: 15s
+  retries: 50
+  start_period: 5s
 
 x-spring-env: &spring-env
   server.port: 8080
   KAFKA_SERVERS: "kafka:9091"
   management.tracing.enabled: false
   management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans
-  JAVA_OPTS: -Xms64M -Xmx1024M
   SECRET_KEY: qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq
   API_KEY: qwtiuqwtiuqiwutiqwitiqwutiqwuituqwiotuqiowutiq
   app.client.balance: http://balanceservice:8080
@@ -191,3 +190,52 @@ services:
       - ./promtail.yaml:/etc/promtail/promtail.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
+
+  kafkaconnect:
+    build:
+      dockerfile: ./kafkaconnect.Dockerfile
+    logging: *logging
+    restart: always
+    expose: ["8083"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:9091"
+      CONNECT_GROUP_ID: "kafkaconnect"
+      CONNECT_CONFIG_STORAGE_TOPIC: "kafkaconnect.config"
+      CONNECT_OFFSET_STORAGE_TOPIC: "kafkaconnect.offsets"
+      CONNECT_STATUS_STORAGE_TOPIC: "kafkaconnect.status"
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafkaconnect"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: -1
+      CONNECT_CONFIG_STORAGE_PARTITIONS: -1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: -1
+      CONNECT_OFFSET_STORAGE_PARTITIONS: -1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: -1
+      CONNECT_STATUS_STORAGE_PARTITIONS: -1
+    healthcheck:
+      test: "curl --fail --silent localhost:8083 | grep version || exit 1"
+      <<: *healthcheck
+
+  kafkaconnectinit:
+    image: curlimages/curl
+    logging: *logging
+    restart: no
+    depends_on:
+      kafkaconnect:
+        condition: service_healthy
+    volumes:
+      - ./kafkaconnect-postgres.json:/opt/kafkaconnect-postgres.json
+      - ./kafkaconnect-redis.json:/opt/kafkaconnect-redis.json
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: |
+      "
+      set -x
+      sleep 1;
+      curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://kafkaconnect:8083/connectors/ -d @/opt/kafkaconnect-postgres.json
+      curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://kafkaconnect:8083/connectors/ -d @/opt/kafkaconnect-redis.json
+      "

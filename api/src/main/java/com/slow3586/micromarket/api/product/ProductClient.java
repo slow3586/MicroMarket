@@ -16,7 +16,7 @@ import java.util.UUID;
     url = "${app.client.product}/api/product")
 public interface ProductClient {
     @GetMapping("{productId}")
-    @Cacheable(value = "getProductById", key = "#productId")
+    @Cacheable(value = ProductConfig.TOPIC, key = "#productId", cacheManager = "productCacheManager")
     ProductDto getProductById(@PathVariable UUID productId);
 
     @PostMapping("query")

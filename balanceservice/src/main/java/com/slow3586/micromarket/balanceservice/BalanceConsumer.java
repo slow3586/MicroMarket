@@ -42,9 +42,9 @@ public class BalanceConsumer {
     ProductClient productClient;
     BalanceService balanceService;
 
-    @KafkaListener(topics = StockConfig.UpdateOrder.TOPIC)
+    @KafkaListener(topics = StockConfig.StockUpdateOrder.TOPIC, properties = StockConfig.StockUpdateOrder.TOPIC_TYPE)
     protected void processStockUpdateOrderReserved(final StockUpdateOrderDto stockUpdateOrder) {
-        if (!stockUpdateOrder.getStatus().equals(StockConfig.UpdateOrder.Status.RESERVED)) {
+        if (!stockUpdateOrder.getStatus().equals(StockConfig.StockUpdateOrder.Status.RESERVED)) {
             return;
         }
         if (balanceUpdateOrderRepository.existsByOrderId(stockUpdateOrder.getOrderId())) {
@@ -52,9 +52,9 @@ public class BalanceConsumer {
         }
 
         final OrderDto order = orderClient.getOrderById(stockUpdateOrder.getOrderId());
-        final ProductDto product = productClient.getProductById(order.getProduct().getId());
+        final ProductDto product = productClient.getProductById(order.getProductId());
         final int total = order.getQuantity() * product.getPrice();
-        final long userBalance = balanceService.getBalanceSumByUserId(order.getBuyer().getId());
+        final long userBalance = balanceService.getBalanceSumByUserId(order.getProductId());
         final boolean enoughBalance = total <= userBalance;
 
         final BalanceUpdateOrder balanceUpdateOrder =
@@ -64,21 +64,16 @@ public class BalanceConsumer {
                     .setStatus(enoughBalance
                         ? BalanceConfig.BalanceUpdateOrder.Status.RESERVED
                         : BalanceConfig.BalanceUpdateOrder.Status.AWAITING)
-                    .setSenderId(order.getBuyer().getId())
-                    .setReceiverId(product.getSeller().getId())
+                    .setSenderId(order.getBuyerId())
+                    .setReceiverId(product.getSellerId())
                     .setOrderId(order.getId())
                     .setCreatedAt(Instant.now()));
-
-        kafkaTemplate.send(
-            BalanceConfig.BalanceUpdateOrder.TOPIC,
-            balanceUpdateOrder.getId(),
-            balanceUpdateOrderMapper.toDto(balanceUpdateOrder));
 
         balanceService.resetUserCache(balanceUpdateOrder.getSenderId());
         balanceService.resetUserCache(balanceUpdateOrder.getReceiverId());
     }
 
-    @KafkaListener(topics = OrderConfig.TOPIC)
+    @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
     protected void processOrderCancelled(final OrderDto order) {
         if (OrderConfig.Status.CANCELLED.equals(order.getStatus())) {
             balanceUpdateOrderRepository.findByOrderId(order.getId())
@@ -90,7 +85,7 @@ public class BalanceConsumer {
         }
     }
 
-    @KafkaListener(topics = BalanceConfig.BalanceUpdate.TOPIC)
+    @KafkaListener(topics = BalanceConfig.BalanceUpdate.TOPIC, properties = BalanceConfig.BalanceUpdate.TOPIC_TYPE)
     protected void processBalanceUpdateCreated(final BalanceUpdateDto balanceUpdateDto) {
         balanceUpdateOrderRepository.findAllAwaitingByUserId(
             balanceUpdateDto.getUserId()
@@ -99,11 +94,6 @@ public class BalanceConsumer {
 
             if (senderBalance >= balanceUpdateOrder.getValue()) {
                 balanceUpdateOrder.setStatus(BalanceConfig.BalanceUpdateOrder.Status.RESERVED);
-
-                kafkaTemplate.send(
-                    BalanceConfig.BalanceUpdateOrder.TOPIC,
-                    balanceUpdateOrder.getId(),
-                    balanceUpdateOrderMapper.toDto(balanceUpdateOrder));
 
                 balanceService.resetUserCache(balanceUpdateOrder.getSenderId());
                 balanceService.resetUserCache(balanceUpdateOrder.getReceiverId());
