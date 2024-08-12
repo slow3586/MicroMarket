@@ -8,6 +8,8 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,7 +24,11 @@ import java.util.UUID;
 @Setter
 @ToString
 @Accessors(chain = true)
-@Entity(name = "`user`")
+@Entity(name = "user_")
+@Table(name = "user_",
+    indexes = {
+        @Index(columnList = "login"),
+    })
 @EntityListeners(AuditEntityListener.class)
 public class User extends DefaultEntity {
     @Id
@@ -30,11 +36,11 @@ public class User extends DefaultEntity {
     @UuidGenerator
     UUID id;
     @Length(min = 4, max = 16)
-    @Column(unique=true)
+    @Column(unique = true)
     String login;
     @NotBlank
     String password;
-    @Column(unique=true)
+    @Column(unique = true)
     @Length(min = 4, max = 16)
     String name;
 }

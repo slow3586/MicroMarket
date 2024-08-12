@@ -7,14 +7,16 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -24,6 +26,9 @@ import java.util.UUID;
 @ToString
 @Accessors(chain = true)
 @Entity(name = "notification")
+@Table(indexes = {
+    @Index(columnList = "userId"),
+})
 @EntityListeners(AuditEntityListener.class)
 public class Notification extends DefaultEntity {
     @Id
@@ -34,6 +39,6 @@ public class Notification extends DefaultEntity {
     UUID userId;
     @NotBlank
     String text;
-    @CreationTimestamp
+    @CreatedDate
     Instant createdAt;
 }

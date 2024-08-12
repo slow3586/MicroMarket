@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api.notification;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -21,5 +22,6 @@ public class NotificationDto implements Serializable {
     UUID id;
     UserDto user;
     String text;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     Instant createdAt;
 }

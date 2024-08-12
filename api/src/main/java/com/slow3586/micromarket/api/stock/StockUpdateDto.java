@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api.stock;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -20,5 +21,6 @@ public class StockUpdateDto implements Serializable {
     UUID id;
     UUID productId;
     int value;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     Instant createdAt;
 }

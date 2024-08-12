@@ -15,12 +15,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Slf4j
@@ -31,7 +32,6 @@ import java.util.UUID;
 public class OrderService {
     OrderRepository orderRepository;
     OrderMapper orderMapper;
-    KafkaTemplate<UUID, Object> kafkaTemplate;
     ProductClient productClient;
     UserClient userClient;
     DeliveryClient deliveryClient;
@@ -46,42 +46,63 @@ public class OrderService {
     }
 
     public OrderDto createOrder(CreateOrderRequest request) {
-        final Order order = orderRepository.save(new Order()
-            .setBuyerId(SecurityUtils.getPrincipalId())
-            .setProductId(request.getProductId())
-            .setQuantity(request.getQuantity())
-            .setStatus(OrderConfig.Status.CREATED));
+        final Order order = orderRepository
+            .findByBuyerIdAndProductId(
+                SecurityUtils.getPrincipalId(),
+                request.getProductId()
+            ).orElseGet(() ->
+                orderRepository.save(
+                    new Order()
+                        .setBuyerId(SecurityUtils.getPrincipalId())
+                        .setProductId(request.getProductId())
+                        .setQuantity(0)
+                        .setStatus(OrderConfig.Status.TEMPLATE)));
+
+        order.setQuantity(order.getQuantity() + request.getQuantity());
 
         return orderMapper.toDto(order);
     }
 
-    public OrderDto updateOrderCancelled(UUID orderId) {
-        return orderRepository
+    public void updateOrderActive(UUID orderId) {
+        final Order order = orderRepository
             .findById(orderId)
-            .map(o -> o.setStatus(OrderConfig.Status.CANCELLED))
-            .map(orderMapper::toDto)
             .orElseThrow();
+
+        if (order.getStatus() != OrderConfig.Status.TEMPLATE) {
+            throw new IllegalStateException("Bad status");
+        }
+
+        order.setStatus(OrderConfig.Status.ACTIVATED);
+    }
+
+    public void updateOrderCancelled(UUID orderId) {
+        final Order order = orderRepository
+            .findById(orderId)
+            .orElseThrow();
+
+        if (order.getStatus() == OrderConfig.Status.COMPLETED) {
+            throw new IllegalStateException("Bad status");
+        }
+
+        order.setStatus(OrderConfig.Status.CANCELLED);
     }
 
     @Async
     @Scheduled(cron = "*/10 * * * * *")
     @AuditDisabled
     public void verify() {
-        orderRepository.queryForAwaitingBalanceTimeoutCheck()
-            .forEach(order ->
-                kafkaTemplate.executeInTransaction((operations) ->
-                    operations.send(OrderConfig.TOPIC,
-                        order.getId(),
-                        orderMapper.toDto(
-                            order.setStatus(OrderConfig.Status.CANCELLED)
-                                .setError("AWAITING_BALANCE_TIMEOUT")))));
-        orderRepository.queryForAwaitingBalanceTimeoutCheck()
-            .forEach(order ->
-                kafkaTemplate.executeInTransaction((operations) ->
-                    operations.send(OrderConfig.TOPIC,
-                        order.getId(),
-                        orderMapper.toDto(
-                            order.setStatus(OrderConfig.Status.CANCELLED)
-                                .setError("AWAITING_DELIVERY_TIMEOUT")))));
+        orderRepository.findAllByStatusAndCreatedAtBeforeOrderByCreatedAt(
+                OrderConfig.Status.PAYMENT_AWAITING,
+                Instant.now().minus(10, ChronoUnit.SECONDS))
+            .forEach(order -> order
+                .setStatus(OrderConfig.Status.CANCELLED)
+                .setError(OrderConfig.Error.PAYMENT_TIMEOUT));
+
+        orderRepository.findAllByStatusAndCreatedAtBeforeOrderByCreatedAt(
+                OrderConfig.Status.DELIVERY_AWAITING,
+                Instant.now().minus(1, ChronoUnit.DAYS))
+            .forEach(order -> order
+                .setStatus(OrderConfig.Status.CANCELLED)
+                .setError(OrderConfig.Error.DELIVERY_TIMEOUT));
     }
 }

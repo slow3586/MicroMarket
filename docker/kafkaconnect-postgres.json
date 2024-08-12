@@ -13,6 +13,8 @@
     "plugin.name": "pgoutput",
     "key.converter.schemas.enable": "false",
     "value.converter.schemas.enable": "false",
+    "consumer.fetch.max.wait.ms": "50",
+    "consumer.fetch.min.bytes": "1048576",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "transforms": "unwrap,valueToKey,extractField",

@@ -13,9 +13,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,20 +32,15 @@ public class BalanceService {
     BalanceUpdateMapper balanceUpdateMapper;
     BalanceUpdateOrderRepository balanceUpdateOrderRepository;
     BalanceUpdateOrderMapper balanceUpdateOrderMapper;
-    KafkaTemplate<UUID, Object> kafkaTemplate;
     OrderClient orderClient;
     ProductClient productClient;
 
     public UUID createBalanceUpdate(final CreateBalanceUpdateRequest request) {
-        final BalanceUpdate balanceUpdate = balanceUpdateRepository.save(
+        return balanceUpdateRepository.save(
             new BalanceUpdate()
                 .setUserId(request.getUserId())
                 .setCreatedAt(Instant.now())
-                .setValue(request.getValue()));
-
-        this.resetUserCache(request.getUserId());
-
-        return balanceUpdate.getId();
+                .setValue(request.getValue())).getId();
     }
 
     //@Cacheable(value = "getBalanceSumByUserId", key = "#userId")
@@ -68,10 +60,4 @@ public class BalanceService {
                 .map(balanceUpdateOrderMapper::toDto)
         ).toList();
     }
-
-    @Caching(evict = {
-        @CacheEvict(value = "getBalanceSumByUserId", key = "#userId"),
-        @CacheEvict(value = "getAllBalanceChangesByUserId", key = "#userId")
-    })
-    public void resetUserCache(final UUID userId) {}
 }

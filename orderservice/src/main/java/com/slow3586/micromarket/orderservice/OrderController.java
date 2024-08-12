@@ -39,9 +39,15 @@ public class OrderController implements OrderClient {
         return orderService.createOrder(request);
     }
 
+    @PostMapping("update/active/{orderId}")
+    @PreAuthorize("hasAnyAuthority('USER')")
+    public void updateOrderActive(@PathVariable UUID orderId) {
+        orderService.updateOrderActive(orderId);
+    }
+
     @PostMapping("update/cancelled/{orderId}")
     @PreAuthorize("hasAnyAuthority('USER')")
-    public OrderDto updateOrderCancelled(@PathVariable UUID orderId) {
-        return orderService.updateOrderCancelled(orderId);
+    public void updateOrderCancelled(@PathVariable UUID orderId) {
+        orderService.updateOrderCancelled(orderId);
     }
 }

@@ -3,6 +3,8 @@ package com.slow3586.micromarket.balanceservice;
 
 import com.slow3586.micromarket.api.balance.BalanceConfig;
 import com.slow3586.micromarket.api.balance.BalanceUpdateDto;
+import com.slow3586.micromarket.api.delivery.DeliveryConfig;
+import com.slow3586.micromarket.api.delivery.DeliveryDto;
 import com.slow3586.micromarket.api.order.OrderClient;
 import com.slow3586.micromarket.api.order.OrderConfig;
 import com.slow3586.micromarket.api.order.OrderDto;
@@ -20,12 +22,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -37,7 +37,6 @@ public class BalanceConsumer {
     BalanceUpdateMapper balanceUpdateMapper;
     BalanceUpdateOrderRepository balanceUpdateOrderRepository;
     BalanceUpdateOrderMapper balanceUpdateOrderMapper;
-    KafkaTemplate<UUID, Object> kafkaTemplate;
     OrderClient orderClient;
     ProductClient productClient;
     BalanceService balanceService;
@@ -57,31 +56,33 @@ public class BalanceConsumer {
         final long userBalance = balanceService.getBalanceSumByUserId(order.getProductId());
         final boolean enoughBalance = total <= userBalance;
 
-        final BalanceUpdateOrder balanceUpdateOrder =
-            balanceUpdateOrderRepository.save(
-                new BalanceUpdateOrder()
-                    .setValue(total)
-                    .setStatus(enoughBalance
-                        ? BalanceConfig.BalanceUpdateOrder.Status.RESERVED
-                        : BalanceConfig.BalanceUpdateOrder.Status.AWAITING)
-                    .setSenderId(order.getBuyerId())
-                    .setReceiverId(product.getSellerId())
-                    .setOrderId(order.getId())
-                    .setCreatedAt(Instant.now()));
-
-        balanceService.resetUserCache(balanceUpdateOrder.getSenderId());
-        balanceService.resetUserCache(balanceUpdateOrder.getReceiverId());
+        balanceUpdateOrderRepository.save(
+            new BalanceUpdateOrder()
+                .setValue(total)
+                .setStatus(enoughBalance
+                    ? BalanceConfig.BalanceUpdateOrder.Status.RESERVED
+                    : BalanceConfig.BalanceUpdateOrder.Status.AWAITING)
+                .setSenderId(order.getBuyerId())
+                .setReceiverId(product.getSellerId())
+                .setOrderId(order.getId())
+                .setCreatedAt(Instant.now()));
     }
 
     @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
     protected void processOrderCancelled(final OrderDto order) {
         if (OrderConfig.Status.CANCELLED.equals(order.getStatus())) {
             balanceUpdateOrderRepository.findByOrderId(order.getId())
-                .ifPresent(balanceUpdateOrder -> {
-                    balanceUpdateOrder.setStatus(BalanceConfig.BalanceUpdateOrder.Status.CANCELLED);
-                    balanceService.resetUserCache(balanceUpdateOrder.getSenderId());
-                    balanceService.resetUserCache(balanceUpdateOrder.getReceiverId());
-                });
+                .ifPresent(balanceUpdateOrder ->
+                    balanceUpdateOrder.setStatus(BalanceConfig.BalanceUpdateOrder.Status.CANCELLED));
+        }
+    }
+
+    @KafkaListener(topics = DeliveryConfig.TOPIC, properties = DeliveryConfig.TOPIC_TYPE)
+    protected void processDeliveryReceived(final DeliveryDto delivery) {
+        if (DeliveryConfig.Status.RECEIVED.equals(delivery.getStatus())) {
+            balanceUpdateOrderRepository.findByOrderId(delivery.getOrderId())
+                .ifPresent(balanceUpdateOrder ->
+                    balanceUpdateOrder.setStatus(BalanceConfig.BalanceUpdateOrder.Status.COMPLETED));
         }
     }
 
@@ -94,9 +95,6 @@ public class BalanceConsumer {
 
             if (senderBalance >= balanceUpdateOrder.getValue()) {
                 balanceUpdateOrder.setStatus(BalanceConfig.BalanceUpdateOrder.Status.RESERVED);
-
-                balanceService.resetUserCache(balanceUpdateOrder.getSenderId());
-                balanceService.resetUserCache(balanceUpdateOrder.getReceiverId());
             }
         });
     }

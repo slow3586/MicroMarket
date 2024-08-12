@@ -15,11 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -29,7 +26,6 @@ import java.util.UUID;
 public class OrderConsumer {
     OrderRepository orderRepository;
     OrderMapper orderMapper;
-    KafkaTemplate<UUID, Object> kafkaTemplate;
     ProductClient productClient;
     UserClient userClient;
     DeliveryClient deliveryClient;
@@ -47,14 +43,14 @@ public class OrderConsumer {
     protected void processBalanceUpdateOrderAwaiting(BalanceUpdateOrderDto balanceUpdateOrder) {
         orderRepository.findByIdAndStatus(
             balanceUpdateOrder.getOrderId(),
-            OrderConfig.Status.CREATED
+            OrderConfig.Status.ACTIVATED
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.PAYMENT_AWAITING));
     }
 
     protected void processBalanceUpdateOrderReserved(BalanceUpdateOrderDto balanceUpdateOrder) {
         orderRepository.findByIdAndStatus(
             balanceUpdateOrder.getOrderId(),
-            OrderConfig.Status.CREATED
+            OrderConfig.Status.ACTIVATED
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.PAYMENT_RESERVED));
         orderRepository.findByIdAndStatus(
             balanceUpdateOrder.getOrderId(),

@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api.delivery;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -18,9 +19,12 @@ import java.util.UUID;
 @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 public class DeliveryDto implements Serializable {
     UUID id;
-    DeliveryConfig.Status status;
     UUID orderId;
+    DeliveryConfig.Status status;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     Instant createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     Instant sentAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     Instant receivedAt;
 }

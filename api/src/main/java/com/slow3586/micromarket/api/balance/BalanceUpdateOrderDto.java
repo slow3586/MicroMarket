@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api.balance;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -25,7 +26,8 @@ public class BalanceUpdateOrderDto implements Serializable {
     UUID senderId;
     @NotNull
     UUID receiverId;
-    long value;
+    int value;
     BalanceConfig.BalanceUpdateOrder.Status status;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     Instant createdAt;
 }

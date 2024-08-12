@@ -11,3 +11,7 @@ CREATE TABLE product
     created_at TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT pk_product PRIMARY KEY (id)
 );
+
+CREATE INDEX idx_5c381847e2b8eedef7f9210fa ON product (seller_id);
+
+CREATE INDEX idx_b457b176870a31c4b12ea5568 ON product (created_at);

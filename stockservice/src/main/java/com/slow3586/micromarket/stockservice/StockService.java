@@ -16,7 +16,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +33,6 @@ public class StockService {
     StockUpdateOrderRepository stockUpdateOrderRepository;
     StockUpdateOrderMapper stockUpdateOrderMapper;
     ProductClient productClient;
-    KafkaTemplate<UUID, Object> kafkaTemplate;
 
     public StockUpdateDto createStockUpdate(CreateStockUpdateRequest request) {
         final UUID userId = SecurityUtils.getPrincipalId();

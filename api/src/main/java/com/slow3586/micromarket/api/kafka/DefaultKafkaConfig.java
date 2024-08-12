@@ -30,10 +30,11 @@ public class DefaultKafkaConfig {
             .newInstance()
             .retryTopicSuffix(".retry." + applicationName)
             .dltSuffix(".dlt." + applicationName)
+            .doNotConfigureDlt()
             .autoCreateTopics(true, 1, (short) 1)
             .fixedBackOff(1000)
-            .maxAttempts(1)
-            .concurrency(1)
+            //.maxAttempts(2)
+            //.concurrency(1)
             .retryOn(Throwable.class)
             .create(template);
     }

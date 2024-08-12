@@ -11,13 +11,15 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -27,6 +29,13 @@ import java.util.UUID;
 @ToString
 @Accessors(chain = true)
 @Entity(name = "stock_update_order")
+@Table(indexes = {
+    @Index(columnList = "productId"),
+    @Index(columnList = "orderId"),
+    @Index(columnList = "status"),
+    @Index(columnList = "orderId, status"),
+    @Index(columnList = "status, createdAt"),
+})
 @EntityListeners(AuditEntityListener.class)
 public class StockUpdateOrder extends DefaultEntity {
     @Id
@@ -43,6 +52,6 @@ public class StockUpdateOrder extends DefaultEntity {
     @NotNull
     @Enumerated(EnumType.STRING)
     StockConfig.StockUpdateOrder.Status status;
-    @CreationTimestamp
+    @CreatedDate
     Instant createdAt;
 }

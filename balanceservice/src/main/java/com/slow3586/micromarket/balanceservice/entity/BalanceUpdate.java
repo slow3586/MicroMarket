@@ -7,6 +7,8 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -14,8 +16,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.annotation.CreatedDate;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -25,6 +27,10 @@ import java.util.UUID;
 @ToString
 @Accessors(chain = true)
 @Entity(name = "balance_update")
+@Table(indexes = {
+    @Index(columnList = "userId"),
+    @Index(columnList = "createdAt"),
+})
 @EntityListeners(AuditEntityListener.class)
 public class BalanceUpdate extends DefaultEntity {
     @Id
@@ -36,6 +42,6 @@ public class BalanceUpdate extends DefaultEntity {
     @Min(1)
     @Max(999999)
     int value;
-    @CreationTimestamp
+    @CreatedDate
     Instant createdAt;
 }

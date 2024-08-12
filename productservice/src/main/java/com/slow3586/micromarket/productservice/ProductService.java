@@ -14,7 +14,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,7 +28,6 @@ public class ProductService {
     ProductRepository productRepository;
     ProductMapper productMapper;
     UserClient userClient;
-    KafkaTemplate<UUID, Object> kafkaTemplate;
 
     public ProductDto createProduct(CreateProductRequest request) {
         return productMapper.toDto(

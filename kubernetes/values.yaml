@@ -5,9 +5,9 @@ springEnv:
   - name: KAFKA_SERVERS
     value: "kafka-service:9091"
   - name: spring.datasource.url
-    value: "jdbc:postgresql://${spring.application.name}db-service:5432/postgres"
+    value: "jdbc:postgresql://postgres-service:5432/postgres"
   - name: spring.liquibase.url
-    value: "jdbc:postgresql://${spring.application.name}db-service:5432/postgres"
+    value: "jdbc:postgresql://postgres-service:5432/postgres"
   - name: management.tracing.enabled
     value: "false"
   - name: management.zipkin.tracing.endpoint

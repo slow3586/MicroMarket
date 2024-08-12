@@ -15,11 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -32,18 +29,17 @@ public class StockConsumer {
     StockUpdateOrderRepository stockUpdateOrderRepository;
     StockUpdateOrderMapper stockUpdateOrderMapper;
     StockService stockService;
-    KafkaTemplate<UUID, Object> kafkaTemplate;
 
     @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
     protected void processOrder(final OrderDto order) {
-        if (OrderConfig.Status.CREATED.equals(order.getStatus())) {
-            this.processOrderCreated(order);
+        if (OrderConfig.Status.ACTIVATED.equals(order.getStatus())) {
+            this.processOrderActivated(order);
         } else if (OrderConfig.Status.CANCELLED.equals(order.getStatus())) {
             this.processOrderCancelled(order);
         }
     }
 
-    protected void processOrderCreated(final OrderDto order) {
+    protected void processOrderActivated(final OrderDto order) {
         if (stockUpdateOrderRepository.existsByOrderId(order.getId())) {
             return;
         }
