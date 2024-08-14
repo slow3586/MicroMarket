@@ -3,15 +3,17 @@ springEnv:
   - name: server.port
     value: "8080"
   - name: KAFKA_SERVERS
-    value: "kafka-service:9091"
+    value: "kafka-controller-headless:9092"
   - name: spring.datasource.url
-    value: "jdbc:postgresql://postgres-service:5432/postgres"
+    value: "jdbc:postgresql://postgres-postgresql-hl:5432/postgres"
   - name: spring.liquibase.url
-    value: "jdbc:postgresql://postgres-service:5432/postgres"
+    value: "jdbc:postgresql://postgres-postgresql-hl:5432/postgres"
+  - name: spring.data.redis.host
+    value: "redis-master"
   - name: management.tracing.enabled
-    value: "false"
-  - name: management.zipkin.tracing.endpoint
-    value: "http://zipkin-service:9411/api/v2/spans"
+    value: "true"
+  - name: management.otlp.tracing.endpoint
+    value: "http://jaeger-service:14250"
   - name: SECRET_KEY
     value: "qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq"
   - name: API_KEY
@@ -30,9 +32,3 @@ springEnv:
     value: "http://stockservice-service:8080"
   - name: app.client.user
     value: "http://userservice-service:8080"
-
-grafana:
-  enabled: true
-
-prometheus:
-  enabled: true

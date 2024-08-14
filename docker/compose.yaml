@@ -15,8 +15,8 @@ x-healthcheck: &healthcheck
 x-spring-env: &spring-env
   server.port: 8080
   KAFKA_SERVERS: "kafka:9091"
-  management.tracing.enabled: false
-  management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans
+  management.tracing.enabled: true
+  management.otlp.tracing.endpoint: http://jaeger:4317
   SECRET_KEY: qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq
   API_KEY: qwtiuqwtiuqiwutiqwitiqwutiqwuituqwiotuqiowutiq
   app.client.balance: http://balanceservice:8080
@@ -196,7 +196,7 @@ services:
       dockerfile: ./kafkaconnect.Dockerfile
     logging: *logging
     restart: always
-    expose: ["8083"]
+    expose: [ "8083" ]
     depends_on:
       kafka:
         condition: service_healthy
@@ -239,3 +239,10 @@ services:
       curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://kafkaconnect:8083/connectors/ -d @/opt/kafkaconnect-postgres.json
       curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://kafkaconnect:8083/connectors/ -d @/opt/kafkaconnect-redis.json
       "
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    logging: *logging
+    ports: [ "16686:16686","4317:4317","4318:4318" ]
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true

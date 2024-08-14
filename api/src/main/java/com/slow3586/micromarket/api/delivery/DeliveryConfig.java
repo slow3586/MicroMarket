@@ -32,7 +32,6 @@ public class DeliveryConfig {
             .toArray(new NewTopic[0]));
     }
 
-
     @Bean
     public RedisCacheManager deliveryCacheManager(DefaultCacheConfig defaultCacheConfig) {
         return defaultCacheConfig.createBasicCacheManager(DeliveryDto.class);
