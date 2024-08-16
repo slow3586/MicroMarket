@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class NotificationService {
     OrderClient orderClient;
     private final ProductClient productClient;
 
+    @Transactional(propagation = Propagation.MANDATORY)
     @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
     public void processOrder(OrderDto order) {
         final ProductDto product = productClient.getProductById(order.getProductId());

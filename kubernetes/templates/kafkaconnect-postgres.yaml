@@ -1,0 +1,35 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: kafkaconnect-postgres
+  labels:
+    strimzi.io/cluster: kafkaconnect
+spec:
+  class: io.debezium.connector.postgresql.PostgresConnector
+  tasksMax: 1
+  config:
+    database.hostname: postgres-postgresql-hl
+    database.port: 5432
+    database.user: postgres
+    database.password: postgres
+    database.dbname: postgres
+    topic.prefix: entity
+    table.exclude.list: (.*).databasechangelog,(.*).databasechangeloglock
+    plugin.name: pgoutput
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+    consumer.fetch.max.wait.ms: 50
+    consumer.fetch.min.bytes: 1048576
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    transforms: unwrap,valueToKey,extractField
+    transforms.unwrap.type: io.debezium.transforms.ExtractNewRecordState
+    transforms.unwrap.drop.tombstones: true
+    transforms.unwrap.delete.handling.mode: none
+    transforms.valueToKey.type: org.apache.kafka.connect.transforms.ValueToKey
+    transforms.valueToKey.fields: id
+    transforms.extractField.type: org.apache.kafka.connect.transforms.ExtractField$Key
+    transforms.extractField.field: id
+    topic.creation.default.cleanup.policy: compact
+    topic.creation.default.replication.factor: 1
+    topic.creation.default.partitions: 1

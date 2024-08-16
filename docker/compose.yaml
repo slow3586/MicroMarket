@@ -116,7 +116,6 @@ services:
     logging: *logging
     environment:
       REDIS_DATABASES: 16
-      REDIS_PASSWORD: redis
     healthcheck:
       test: "redis-cli ping || exit 1"
       <<: *healthcheck

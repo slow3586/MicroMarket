@@ -1,0 +1,22 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: kafkaconnect
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  image: slow3586/micromarket:kafkaconnect-0.1.0
+  replicas: 1
+  bootstrapServers: kafka-kafka-bootstrap:9092
+  config:
+    group.id: kafkaconnect
+    offset.storage.topic: kafkaconnect.offsets
+    config.storage.topic: kafkaconnect.configs
+    status.storage.topic: kafkaconnect.status
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1

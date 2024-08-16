@@ -3,7 +3,7 @@ springEnv:
   - name: server.port
     value: "8080"
   - name: KAFKA_SERVERS
-    value: "kafka-controller-headless:9092"
+    value: "kafka-kafka-bootstrap:9092"
   - name: spring.datasource.url
     value: "jdbc:postgresql://postgres-postgresql-hl:5432/postgres"
   - name: spring.liquibase.url

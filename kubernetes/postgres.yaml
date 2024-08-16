@@ -1,0 +1,9 @@
+global:
+  postgresql:
+    auth:
+      postgresPassword: "postgres"
+      username: "postgres"
+      password: "postgres"
+    configuration: |-
+      wal_level=logical
+      ssl=off
