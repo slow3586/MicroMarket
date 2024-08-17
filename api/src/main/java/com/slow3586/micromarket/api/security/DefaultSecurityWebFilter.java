@@ -36,7 +36,7 @@ public class DefaultSecurityWebFilter extends OncePerRequestFilter {
     SecretKey secretKey;
 
     @Override
-    protected void doFilterInternal(
+    public void doFilterInternal(
         @NonNull final HttpServletRequest request,
         @NonNull final HttpServletResponse response,
         @NonNull final FilterChain filterChain

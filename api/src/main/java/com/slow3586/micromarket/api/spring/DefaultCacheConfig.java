@@ -1,5 +1,6 @@
 package com.slow3586.micromarket.api.spring;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
@@ -56,7 +57,18 @@ public class DefaultCacheConfig {
 
     @Bean
     @Primary
-    public RedisCacheManager defaultCacheManager() {
-        return createBasicCacheManager(Object.class);
+    public RedisCacheManager typingCacheManager() {
+        return new RedisCacheManager(
+            RedisCacheWriter.lockingRedisCacheWriter(connectionFactory),
+            redisCacheConfiguration()
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                    .fromSerializer(new GenericJackson2JsonRedisSerializer(
+                        this.objectMapper.copy()
+                            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                            .findAndRegisterModules()
+                            .activateDefaultTyping(
+                                this.objectMapper.getPolymorphicTypeValidator(),
+                                ObjectMapper.DefaultTyping.NON_FINAL_AND_ENUMS,
+                                JsonTypeInfo.As.PROPERTY)))));
     }
 }

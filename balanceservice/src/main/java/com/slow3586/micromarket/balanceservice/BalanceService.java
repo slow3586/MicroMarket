@@ -1,6 +1,8 @@
 package com.slow3586.micromarket.balanceservice;
 
 
+import com.slow3586.micromarket.api.balance.BalanceConfig;
+import com.slow3586.micromarket.api.balance.BalanceUpdateOrderDto;
 import com.slow3586.micromarket.api.balance.CreateBalanceUpdateRequest;
 import com.slow3586.micromarket.api.order.OrderClient;
 import com.slow3586.micromarket.api.product.ProductClient;
@@ -13,11 +15,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -39,15 +41,20 @@ public class BalanceService {
         return balanceUpdateRepository.save(
             new BalanceUpdate()
                 .setUserId(request.getUserId())
-                .setCreatedAt(Instant.now())
                 .setValue(request.getValue())).getId();
     }
 
-    //@Cacheable(value = "getBalanceSumByUserId", key = "#userId")
+    @Cacheable(value = BalanceConfig.CACHE_GETBALANCESUMBYUSERID, key = "#userId")
     public long getBalanceSumByUserId(final UUID userId) {
         return balanceUpdateRepository.sumAllByUserId(userId)
                + balanceUpdateOrderRepository.sumAllPositiveByUserId(userId)
                - balanceUpdateOrderRepository.sumAllNegativeByUserId(userId);
+    }
+
+    public BalanceUpdateOrderDto getBalanceUpdateOrderByOrderId(final UUID orderId) {
+        return balanceUpdateOrderRepository.findByOrderId(orderId)
+            .map(balanceUpdateOrderMapper::toDto)
+            .orElseThrow();
     }
 
     public List<Serializable> getAllBalanceChangesByUserId(UUID userId) {

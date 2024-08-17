@@ -12,6 +12,5 @@ import java.util.UUID;
     url = "${app.client.notification}/api/notification")
 public interface NotificationClient {
     @GetMapping("user/{userId}")
-    //@Cacheable(value = "getAllNotificationsByUserId", key = "#userId")
     List<NotificationDto> getAllNotificationsByUserId(@PathVariable("userId") UUID userId);
 }

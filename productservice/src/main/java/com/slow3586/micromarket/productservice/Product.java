@@ -21,6 +21,7 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -36,7 +37,7 @@ import java.util.UUID;
     @Index(columnList = "sellerId"),
     @Index(columnList = "createdAt"),
 })
-@EntityListeners(AuditEntityListener.class)
+@EntityListeners({AuditEntityListener.class, AuditingEntityListener.class})
 public class Product extends DefaultEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

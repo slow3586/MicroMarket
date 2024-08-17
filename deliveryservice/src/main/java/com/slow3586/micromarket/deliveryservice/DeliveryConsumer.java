@@ -12,8 +12,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,7 +31,6 @@ public class DeliveryConsumer {
 
         deliveryRepository.save(
             new Delivery()
-                .setCreatedAt(Instant.now())
                 .setStatus(DeliveryConfig.Status.AWAITING)
                 .setOrderId(balanceUpdateOrder.getOrderId()));
     }

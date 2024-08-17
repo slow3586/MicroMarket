@@ -1,6 +1,5 @@
 package com.slow3586.micromarket.api.delivery;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,7 +12,6 @@ import java.util.UUID;
     url = "${app.client.delivery}/api/delivery")
 public interface DeliveryClient {
     @GetMapping("{deliveryId}")
-    @Cacheable(value = DeliveryConfig.TOPIC, key = "#deliveryId", cacheManager = "deliveryCacheManager")
     DeliveryDto getDeliveryById(@PathVariable UUID deliveryId);
 
     @PostMapping("update/sent/{deliveryId}")

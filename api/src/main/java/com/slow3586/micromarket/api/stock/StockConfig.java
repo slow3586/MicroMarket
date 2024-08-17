@@ -14,6 +14,9 @@ import java.util.stream.Stream;
 public class StockConfig {
     private static final String BASE = "entity.stockservice";
 
+    public static final String CACHE_GETSTOCKSUMBYPRODUCTID = "cache.stockservice.getStockSumByProductId";
+
+
     public static class StockUpdate {
         public final static String TOPIC = BASE + ".stock_update";
         public final static String TOPIC_TYPE = "spring.json.value.default.type=" + "com.slow3586.micromarket.api.stock.StockUpdateDto";
@@ -22,6 +25,8 @@ public class StockConfig {
     public static class StockUpdateOrder {
         public final static String TOPIC = BASE + ".stock_update_order";
         public final static String TOPIC_TYPE = "spring.json.value.default.type=" + "com.slow3586.micromarket.api.stock.StockUpdateOrderDto";
+
+        public static final String CACHE_ORDERID = "cache.stockservice.stockorder.orderid";
 
         public enum Status {
             AWAITING,

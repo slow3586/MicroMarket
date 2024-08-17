@@ -2,6 +2,7 @@ package com.slow3586.micromarket.balanceservice;
 
 
 import com.slow3586.micromarket.api.balance.BalanceClient;
+import com.slow3586.micromarket.api.balance.BalanceUpdateOrderDto;
 import com.slow3586.micromarket.api.balance.CreateBalanceUpdateRequest;
 import com.slow3586.micromarket.api.utils.SecurityUtils;
 import jakarta.validation.Valid;
@@ -32,6 +33,11 @@ public class BalanceController implements BalanceClient {
     @PreAuthorize("hasAnyAuthority('USER')")
     public long getCurrentUserBalance() {
         return balanceService.getBalanceSumByUserId(SecurityUtils.getPrincipalId());
+    }
+
+    @Override
+    public BalanceUpdateOrderDto getBalanceUpdateOrderByOrderId(UUID orderId) {
+        return balanceService.getBalanceUpdateOrderByOrderId(orderId);
     }
 
     @GetMapping("list")

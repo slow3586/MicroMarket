@@ -47,9 +47,10 @@ public class OrderService {
 
     public OrderDto createOrder(CreateOrderRequest request) {
         final Order order = orderRepository
-            .findByBuyerIdAndProductId(
+            .findByBuyerIdAndProductIdAndStatus(
                 SecurityUtils.getPrincipalId(),
-                request.getProductId()
+                request.getProductId(),
+                OrderConfig.Status.TEMPLATE
             ).orElseGet(() ->
                 orderRepository.save(
                     new Order()
@@ -90,19 +91,21 @@ public class OrderService {
     @Async
     @Scheduled(cron = "*/10 * * * * *")
     @AuditDisabled
-    public void verify() {
+    public void checkTimeouts() {
+        log.info("Checking order timeouts");
+
         orderRepository.findAllByStatusAndCreatedAtBeforeOrderByCreatedAt(
                 OrderConfig.Status.PAYMENT_AWAITING,
                 Instant.now().minus(10, ChronoUnit.SECONDS))
-            .forEach(order -> order
+            .forEach(order -> orderRepository.save(order
                 .setStatus(OrderConfig.Status.CANCELLED)
-                .setError(OrderConfig.Error.PAYMENT_TIMEOUT));
+                .setError(OrderConfig.Error.PAYMENT_TIMEOUT)));
 
         orderRepository.findAllByStatusAndCreatedAtBeforeOrderByCreatedAt(
                 OrderConfig.Status.DELIVERY_AWAITING,
-                Instant.now().minus(1, ChronoUnit.DAYS))
-            .forEach(order -> order
+                Instant.now().minus(1, ChronoUnit.MINUTES))
+            .forEach(order -> orderRepository.save(order
                 .setStatus(OrderConfig.Status.CANCELLED)
-                .setError(OrderConfig.Error.DELIVERY_TIMEOUT));
+                .setError(OrderConfig.Error.DELIVERY_TIMEOUT)));
     }
 }

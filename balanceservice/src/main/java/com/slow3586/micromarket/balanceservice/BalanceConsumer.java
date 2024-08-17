@@ -3,6 +3,7 @@ package com.slow3586.micromarket.balanceservice;
 
 import com.slow3586.micromarket.api.balance.BalanceConfig;
 import com.slow3586.micromarket.api.balance.BalanceUpdateDto;
+import com.slow3586.micromarket.api.balance.BalanceUpdateOrderDto;
 import com.slow3586.micromarket.api.delivery.DeliveryConfig;
 import com.slow3586.micromarket.api.delivery.DeliveryDto;
 import com.slow3586.micromarket.api.order.OrderClient;
@@ -21,11 +22,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
 
 @Slf4j
 @Service
@@ -42,7 +43,7 @@ public class BalanceConsumer {
     BalanceService balanceService;
 
     @KafkaListener(topics = StockConfig.StockUpdateOrder.TOPIC, properties = StockConfig.StockUpdateOrder.TOPIC_TYPE)
-    protected void processStockUpdateOrderReserved(final StockUpdateOrderDto stockUpdateOrder) {
+    public void processStockUpdateOrderReserved(final StockUpdateOrderDto stockUpdateOrder) {
         if (!stockUpdateOrder.getStatus().equals(StockConfig.StockUpdateOrder.Status.RESERVED)) {
             return;
         }
@@ -64,12 +65,11 @@ public class BalanceConsumer {
                     : BalanceConfig.BalanceUpdateOrder.Status.AWAITING)
                 .setSenderId(order.getBuyerId())
                 .setReceiverId(product.getSellerId())
-                .setOrderId(order.getId())
-                .setCreatedAt(Instant.now()));
+                .setOrderId(order.getId()));
     }
 
     @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
-    protected void processOrderCancelled(final OrderDto order) {
+    public void processOrderCancelled(final OrderDto order) {
         if (OrderConfig.Status.CANCELLED.equals(order.getStatus())) {
             balanceUpdateOrderRepository.findByOrderId(order.getId())
                 .ifPresent(balanceUpdateOrder ->
@@ -78,7 +78,7 @@ public class BalanceConsumer {
     }
 
     @KafkaListener(topics = DeliveryConfig.TOPIC, properties = DeliveryConfig.TOPIC_TYPE)
-    protected void processDeliveryReceived(final DeliveryDto delivery) {
+    public void processDeliveryReceived(final DeliveryDto delivery) {
         if (DeliveryConfig.Status.RECEIVED.equals(delivery.getStatus())) {
             balanceUpdateOrderRepository.findByOrderId(delivery.getOrderId())
                 .ifPresent(balanceUpdateOrder ->
@@ -87,9 +87,10 @@ public class BalanceConsumer {
     }
 
     @KafkaListener(topics = BalanceConfig.BalanceUpdate.TOPIC, properties = BalanceConfig.BalanceUpdate.TOPIC_TYPE)
-    protected void processBalanceUpdateCreated(final BalanceUpdateDto balanceUpdateDto) {
+    @CacheEvict(value = BalanceConfig.CACHE_GETBALANCESUMBYUSERID, key = "#balanceUpdate.userId")
+    public void processBalanceUpdateCreated(final BalanceUpdateDto balanceUpdate) {
         balanceUpdateOrderRepository.findAllAwaitingByUserId(
-            balanceUpdateDto.getUserId()
+            balanceUpdate.getUserId()
         ).forEach(balanceUpdateOrder -> {
             final long senderBalance = balanceService.getBalanceSumByUserId(balanceUpdateOrder.getSenderId());
 
@@ -97,6 +98,14 @@ public class BalanceConsumer {
                 balanceUpdateOrder.setStatus(BalanceConfig.BalanceUpdateOrder.Status.RESERVED);
             }
         });
+    }
+
+    @KafkaListener(topics = BalanceConfig.BalanceUpdateOrder.TOPIC, properties = BalanceConfig.BalanceUpdateOrder.TOPIC_TYPE)
+    @Caching(evict = {
+        @CacheEvict(value = BalanceConfig.CACHE_GETBALANCESUMBYUSERID, key = "#balanceUpdateOrder.senderId"),
+        @CacheEvict(value = BalanceConfig.CACHE_GETBALANCESUMBYUSERID, key = "#balanceUpdateOrder.receiverId")
+    })
+    public void processBalanceUpdateOrder(final BalanceUpdateOrderDto balanceUpdateOrder) {
     }
 
 }

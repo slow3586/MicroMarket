@@ -17,6 +17,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -29,7 +30,7 @@ import java.util.UUID;
 @Table(indexes = {
     @Index(columnList = "userId"),
 })
-@EntityListeners(AuditEntityListener.class)
+@EntityListeners({AuditEntityListener.class, AuditingEntityListener.class})
 public class Notification extends DefaultEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

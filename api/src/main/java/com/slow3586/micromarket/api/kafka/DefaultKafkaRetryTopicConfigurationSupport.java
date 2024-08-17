@@ -7,7 +7,7 @@ import org.springframework.util.backoff.FixedBackOff;
 @Configuration
 public class DefaultKafkaRetryTopicConfigurationSupport extends RetryTopicConfigurationSupport {
     @Override
-    protected void configureBlockingRetries(BlockingRetriesConfigurer blockingRetries) {
+    public void configureBlockingRetries(BlockingRetriesConfigurer blockingRetries) {
         final FixedBackOff backOff = new FixedBackOff();
         backOff.setMaxAttempts(2000);
         backOff.setInterval(1000);

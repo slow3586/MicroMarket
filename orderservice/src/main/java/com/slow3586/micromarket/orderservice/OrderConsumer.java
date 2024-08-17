@@ -32,7 +32,7 @@ public class OrderConsumer {
     StockClient stockClient;
 
     @KafkaListener(topics = BalanceConfig.BalanceUpdateOrder.TOPIC, properties = BalanceConfig.BalanceUpdateOrder.TOPIC_TYPE)
-    protected void processBalanceUpdateOrder(BalanceUpdateOrderDto balanceUpdateOrder) {
+    public void processBalanceUpdateOrder(BalanceUpdateOrderDto balanceUpdateOrder) {
         if (BalanceConfig.BalanceUpdateOrder.Status.AWAITING.equals(balanceUpdateOrder.getStatus())) {
             this.processBalanceUpdateOrderAwaiting(balanceUpdateOrder);
         } else if (BalanceConfig.BalanceUpdateOrder.Status.RESERVED.equals(balanceUpdateOrder.getStatus())) {
@@ -40,14 +40,14 @@ public class OrderConsumer {
         }
     }
 
-    protected void processBalanceUpdateOrderAwaiting(BalanceUpdateOrderDto balanceUpdateOrder) {
+    public void processBalanceUpdateOrderAwaiting(BalanceUpdateOrderDto balanceUpdateOrder) {
         orderRepository.findByIdAndStatus(
             balanceUpdateOrder.getOrderId(),
             OrderConfig.Status.ACTIVATED
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.PAYMENT_AWAITING));
     }
 
-    protected void processBalanceUpdateOrderReserved(BalanceUpdateOrderDto balanceUpdateOrder) {
+    public void processBalanceUpdateOrderReserved(BalanceUpdateOrderDto balanceUpdateOrder) {
         orderRepository.findByIdAndStatus(
             balanceUpdateOrder.getOrderId(),
             OrderConfig.Status.ACTIVATED
@@ -66,6 +66,8 @@ public class OrderConsumer {
             this.processDeliverySent(delivery);
         } else if (DeliveryConfig.Status.RECEIVED.equals(delivery.getStatus())) {
             this.processDeliveryReceived(delivery);
+        } else if (DeliveryConfig.Status.CANCELLED.equals(delivery.getStatus())) {
+            this.processDeliveryCancelled(delivery);
         }
     }
 
@@ -88,5 +90,11 @@ public class OrderConsumer {
             delivery.getOrderId(),
             OrderConfig.Status.DELIVERY_SENT
         ).ifPresent(o -> o.setStatus(OrderConfig.Status.COMPLETED));
+    }
+
+    public void processDeliveryCancelled(DeliveryDto delivery) {
+        orderRepository.findById(
+            delivery.getOrderId()
+        ).ifPresent(o -> o.setStatus(OrderConfig.Status.CANCELLED));
     }
 }

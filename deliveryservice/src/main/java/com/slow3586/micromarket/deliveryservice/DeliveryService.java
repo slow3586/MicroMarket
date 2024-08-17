@@ -8,7 +8,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +28,7 @@ public class DeliveryService {
         final Delivery delivery = deliveryRepository.findById(deliveryId).orElseThrow();
 
         if (!delivery.getStatus().equals(DeliveryConfig.Status.AWAITING)) {
-            throw new AccessDeniedException("Некорректный статус доставки!");
+            throw new IllegalStateException("Некорректный статус доставки!");
         }
 
         return deliveryMapper.toDto(
@@ -42,7 +41,7 @@ public class DeliveryService {
         final Delivery delivery = deliveryRepository.findById(deliveryId).orElseThrow();
 
         if (!delivery.getStatus().equals(DeliveryConfig.Status.SENT)) {
-            throw new AccessDeniedException("Некорректный статус доставки!");
+            throw new IllegalStateException("Некорректный статус доставки!");
         }
 
         return deliveryMapper.toDto(
@@ -54,8 +53,10 @@ public class DeliveryService {
     public DeliveryDto updateDeliveryCancelled(UUID deliveryId) {
         final Delivery delivery = deliveryRepository.findById(deliveryId).orElseThrow();
 
-        if (!delivery.getStatus().equals(DeliveryConfig.Status.AWAITING)) {
-            throw new AccessDeniedException("Некорректный статус доставки!");
+        if (!delivery.getStatus().equals(DeliveryConfig.Status.AWAITING)
+            && !delivery.getStatus().equals(DeliveryConfig.Status.SENT)
+        ) {
+            throw new IllegalStateException("Некорректный статус доставки!");
         }
 
         return deliveryMapper.toDto(

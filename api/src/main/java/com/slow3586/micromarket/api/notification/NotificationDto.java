@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.slow3586.micromarket.api.user.UserDto;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -20,7 +19,7 @@ import java.util.UUID;
 @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
 public class NotificationDto implements Serializable {
     UUID id;
-    UserDto user;
+    UUID userId;
     String text;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     Instant createdAt;

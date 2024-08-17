@@ -4,6 +4,7 @@ package com.slow3586.micromarket.stockservice;
 import com.slow3586.micromarket.api.product.ProductClient;
 import com.slow3586.micromarket.api.product.ProductDto;
 import com.slow3586.micromarket.api.stock.CreateStockUpdateRequest;
+import com.slow3586.micromarket.api.stock.StockConfig;
 import com.slow3586.micromarket.api.stock.StockUpdateDto;
 import com.slow3586.micromarket.api.stock.StockUpdateOrderDto;
 import com.slow3586.micromarket.api.utils.SecurityUtils;
@@ -16,6 +17,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,13 +51,13 @@ public class StockService {
         return stockUpdateMapper.toDto(entity);
     }
 
-    //@Cacheable(value = "getStockSumByProductId", key = "#productId")
+    @Cacheable(value = StockConfig.CACHE_GETSTOCKSUMBYPRODUCTID, key = "#productId")
     public long getStockSumByProductId(UUID productId) {
         return stockUpdateRepository.sumAllByProductId(productId)
             - stockUpdateOrderRepository.sumAllByProductId(productId);
     }
 
-    //@Cacheable(value = "getStockOrderChangeByOrderId", key = "#orderId")
+    @Cacheable(value = StockConfig.StockUpdateOrder.CACHE_ORDERID, key = "#orderId", cacheManager = "stockUpdateOrderCacheManager")
     public StockUpdateOrderDto getStockOrderChangeByOrderId(UUID orderId) {
         return stockUpdateOrderRepository.findByOrderId(orderId)
             .map(stockUpdateOrderMapper::toDto)

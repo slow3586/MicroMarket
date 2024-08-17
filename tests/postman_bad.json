@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "510bbdb3-91f0-4570-90bb-fcf85dea3c96",
-		"name": "MicroMarket",
+		"_postman_id": "2a5398a5-3a00-4ad9-8d64-c6404f2a3305",
+		"name": "MicroMarket Bad",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "20842312"
 	},
@@ -1007,7 +1007,7 @@
 			"response": []
 		},
 		{
-			"name": "Update delivery as sent as API",
+			"name": "Update delivery as SENT as API",
 			"event": [
 				{
 					"listen": "test",
@@ -1037,10 +1037,6 @@
 							"\r",
 							"pm.test(\"Correct status\", function () {\r",
 							"    pm.expect(jsonData.status).to.eq(\"SENT\");\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Correct created at\", function () {\r",
-							"    pm.expect(jsonData.created_at).to.have.length.above(0);\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Correct sent at\", function () {\r",
@@ -1082,7 +1078,7 @@
 			"response": []
 		},
 		{
-			"name": "Update delivery as received as API",
+			"name": "Update delivery as CANCELLED as API",
 			"event": [
 				{
 					"listen": "test",
@@ -1111,19 +1107,7 @@
 							"});\r",
 							"\r",
 							"pm.test(\"Correct status\", function () {\r",
-							"    pm.expect(jsonData.status).to.eq(\"RECEIVED\");\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Correct created at\", function () {\r",
-							"    pm.expect(jsonData.created_at).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Correct sent at\", function () {\r",
-							"    pm.expect(jsonData.created_at).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Correct received at\", function () {\r",
-							"    pm.expect(jsonData.received_at).to.have.length.above(0);\r",
+							"    pm.expect(jsonData.status).to.eq(\"CANCELLED\");\r",
 							"});"
 						],
 						"type": "text/javascript",
@@ -1145,7 +1129,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/delivery/update/received/{{deliveryId}}",
+					"raw": "{{url}}/api/delivery/update/cancelled/{{deliveryId}}",
 					"host": [
 						"{{url}}"
 					],
@@ -1153,7 +1137,7 @@
 						"api",
 						"delivery",
 						"update",
-						"received",
+						"cancelled",
 						"{{deliveryId}}"
 					]
 				}
@@ -1161,7 +1145,7 @@
 			"response": []
 		},
 		{
-			"name": "List all balance changes as buyer",
+			"name": "Check Order is CANCELLED",
 			"event": [
 				{
 					"listen": "test",
@@ -1181,18 +1165,13 @@
 							"\r",
 							"const jsonData = pm.response.json();\r",
 							"\r",
-							"pm.test(\"Has balance change\", function () {\r",
-							"    pm.expect(jsonData[0]).to.not.be.undefined();\r",
+							"pm.test(\"Correct ID\", function () {\r",
+							"    pm.expect(jsonData.id).to.eq(pm.collectionVariables.get(\"orderId\"));\r",
 							"});\r",
 							"\r",
-							"pm.test(\"Has balance change order\", function () {\r",
-							"    pm.expect(jsonData[1]).to.not.be.undefined();\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Correct BalanceChangeOrder status\", function () {\r",
-							"    pm.expect(jsonData[1].status).to.eq(\"COMPLETED\");\r",
-							"});\r",
-							""
+							"pm.test(\"Correct status\", function () {\r",
+							"    pm.expect(jsonData.status).to.eq(\"CANCELLED\");\r",
+							"});"
 						],
 						"type": "text/javascript",
 						"packages": {}
@@ -1213,21 +1192,200 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/balance/list",
+					"raw": "{{url}}/api/order/{{orderId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"order",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check ProductStockOrder is CANCELLED",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Correct order ID\", function () {\r",
+							"    pm.expect(jsonData.order_id).to.eq(pm.collectionVariables.get(\"orderId\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Correct status\", function () {\r",
+							"    pm.expect(jsonData.status).to.eq(\"CANCELLED\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{buyerBearerToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/stock/order/{{orderId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"stock",
+						"order",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check ProductStock sum is rolled back",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Correct value\", function () {\r",
+							"    pm.expect(pm.response.text()).to.eq(\"100\")\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{apiKey}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/stock/{{productId}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"stock",
+						"{{productId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check BalanceUpdateOrder is CANCELLED",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Correct order ID\", function () {\r",
+							"    pm.expect(jsonData.order_id).to.eq(pm.collectionVariables.get(\"orderId\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Correct status\", function () {\r",
+							"    pm.expect(jsonData.status).to.eq(\"CANCELLED\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{buyerBearerToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/balance/order/{{orderId}}",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"api",
 						"balance",
-						"list"
+						"order",
+						"{{orderId}}"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "List all balance changes as seller",
+			"name": "Check Balance as buyer is rolled back",
 			"event": [
 				{
 					"listen": "test",
@@ -1245,14 +1403,62 @@
 							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
 							"});\r",
 							"\r",
-							"const jsonData = pm.response.json();\r",
-							"\r",
-							"pm.test(\"Has balance change order\", function () {\r",
-							"    pm.expect(jsonData[0]).to.not.be.undefined();\r",
+							"pm.test(\"Correct value\", function () {\r",
+							"    pm.expect(pm.response.text()).to.eq(\"1000\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{buyerBearerToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/balance",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check Balance as seller is rolled back",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
 							"});\r",
 							"\r",
-							"pm.test(\"Correct BalanceChangeOrder status\", function () {\r",
-							"    pm.expect(jsonData[0].status).to.eq(\"COMPLETED\");\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Correct value\", function () {\r",
+							"    pm.expect(pm.response.text()).to.eq(\"0\");\r",
 							"});"
 						],
 						"type": "text/javascript",
@@ -1274,130 +1480,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/balance/list",
+					"raw": "{{url}}/api/balance",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"api",
-						"balance",
-						"list"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "List all notifications as buyer",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Not blank\", function () {\r",
-							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"No exceptions\", function () {\r",
-							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
-							"});\r",
-							"\r",
-							"const jsonData = pm.response.json();\r",
-							"\r",
-							"pm.test(\"Correct number of notifications\", function () {\r",
-							"    pm.expect(jsonData).to.have.length(3);\r",
-							"});"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{sellerBearerToken}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{url}}/api/notification/user/{{buyerUserId}}",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"api",
-						"notification",
-						"user",
-						"{{buyerUserId}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "List all notifications as seller",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Not blank\", function () {\r",
-							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"No exceptions\", function () {\r",
-							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
-							"});\r",
-							"\r",
-							"const jsonData = pm.response.json();\r",
-							"\r",
-							"pm.test(\"Correct number of notifications\", function () {\r",
-							"    pm.expect(jsonData).to.have.length(2);\r",
-							"});"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{sellerBearerToken}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{url}}/api/notification/user/{{sellerUserId}}",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"api",
-						"notification",
-						"user",
-						"{{sellerUserId}}"
+						"balance"
 					]
 				}
 			},

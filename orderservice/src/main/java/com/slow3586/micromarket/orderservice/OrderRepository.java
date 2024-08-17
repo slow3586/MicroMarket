@@ -18,5 +18,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     Optional<Order> findByIdAndStatus(UUID id, OrderConfig.Status status);
 
-    Optional<Order> findByBuyerIdAndProductId(UUID principalId, UUID productId);
+    Optional<Order> findByBuyerIdAndProductIdAndStatus(
+        UUID principalId,
+        UUID productId,
+        OrderConfig.Status status);
 }

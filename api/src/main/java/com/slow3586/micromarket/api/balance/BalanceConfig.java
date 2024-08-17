@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 @Configuration
 public class BalanceConfig {
     private static final String BASE = "entity.balanceservice";
+    public static final String CACHE_GETBALANCESUMBYUSERID = "cache.balanceservice.getBalanceSumByUserId";
 
     public static class BalanceUpdate {
         public final static String TOPIC = BASE + ".balance_update";

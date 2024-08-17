@@ -3,6 +3,7 @@ package com.slow3586.micromarket.api.balance;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -14,6 +15,9 @@ import java.util.UUID;
 public interface BalanceClient {
     @GetMapping
     long getCurrentUserBalance();
+
+    @GetMapping("order/{orderId}")
+    BalanceUpdateOrderDto getBalanceUpdateOrderByOrderId(@PathVariable UUID orderId);
 
     @PostMapping("add")
     UUID createBalanceUpdate(@RequestBody @Valid CreateBalanceUpdateRequest request);

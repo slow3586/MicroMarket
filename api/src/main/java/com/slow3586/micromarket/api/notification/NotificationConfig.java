@@ -13,13 +13,17 @@ import java.util.stream.Stream;
 @Configuration
 public class NotificationConfig {
     private static final String BASE = "entity.notificationservice";
-    public static final String TOPIC = BASE + ".notification";
-    public final static String TOPIC_TYPE = "spring.json.value.default.type=" + "com.slow3586.micromarket.api.notification.NotificationDto";
+
+    public static class Notification {
+        public static final String TOPIC = BASE + ".notification";
+        public final static String TOPIC_TYPE = "spring.json.value.default.type=" + "com.slow3586.micromarket.api.notification.NotificationDto";
+        public final static String CACHE_USERID = "cache.notificationservice.notification.userid";
+    }
 
     @Bean
     public KafkaAdmin.NewTopics notificationTopicsInit() {
         return new KafkaAdmin.NewTopics(Stream.of(
-                NotificationConfig.TOPIC
+                NotificationConfig.Notification.TOPIC
             ).map(t -> TopicBuilder.name(t).build())
             .toList()
             .toArray(new NewTopic[0]));

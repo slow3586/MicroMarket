@@ -1,6 +1,5 @@
 package com.slow3586.micromarket.api.user;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,7 +12,6 @@ import java.util.UUID;
     url = "${app.client.user}/api/user")
 public interface UserClient {
     @GetMapping("{uuid}")
-    @Cacheable(value = UserConfig.TOPIC, key = "#uuid", cacheManager = "userCacheManager")
     UserDto getUserById(@PathVariable UUID uuid);
 
     @PostMapping("register")

@@ -1,7 +1,6 @@
 package com.slow3586.micromarket.api.order;
 
 import jakarta.validation.Valid;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +14,6 @@ import java.util.UUID;
     url = "${app.client.order}/api/order")
 public interface OrderClient {
     @GetMapping("{orderId}")
-    @Cacheable(value = OrderConfig.TOPIC, key = "#orderId", cacheManager = "orderCacheManager")
     OrderDto getOrderById(@PathVariable UUID orderId);
 
     @PostMapping("create")

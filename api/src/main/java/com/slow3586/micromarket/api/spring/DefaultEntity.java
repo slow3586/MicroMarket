@@ -3,11 +3,12 @@ package com.slow3586.micromarket.api.spring;
 import com.slow3586.micromarket.api.audit.AuditEntityListener;
 import jakarta.persistence.EntityListeners;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.Objects;
 import java.util.UUID;
 
-@EntityListeners(AuditEntityListener.class)
+@EntityListeners({AuditEntityListener.class, AuditingEntityListener.class})
 public abstract class DefaultEntity {
 
     abstract public UUID getId();
