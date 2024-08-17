@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -25,10 +26,12 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @Transactional(transactionManager = "transactionManager")
 public class NotificationService {
+    private static final String CACHE_DELIVERYSERVICE_NOTIFICATION_USERID = "cache.deliveryservice.notification.userid";
     NotificationRepository notificationRepository;
     NotificationMapper notificationMapper;
     OrderClient orderClient;
-    private final ProductClient productClient;
+    ProductClient productClient;
+    CacheManager cacheManager;
 
     @Transactional(propagation = Propagation.MANDATORY)
     @KafkaListener(topics = OrderConfig.TOPIC, properties = OrderConfig.TOPIC_TYPE)
@@ -56,7 +59,13 @@ public class NotificationService {
         }
     }
 
-    public List<NotificationDto> getUserNotifications(UUID userId) {
+    /*@KafkaListener(topics = NotificationConfig.TOPIC, properties = NotificationConfig.TOPIC_TYPE)
+    @CacheEvict(value = CACHE_DELIVERYSERVICE_NOTIFICATION_USERID, key = "#notification.user.id")
+    public void processNotification(NotificationDto notification) {
+    }*/
+
+    //@Cacheable(value = CACHE_DELIVERYSERVICE_NOTIFICATION_USERID, key = "#userId")
+    public List<NotificationDto> getAllNotificationsByUserId(UUID userId) {
         return notificationRepository.findAllByUserId(userId)
             .stream()
             .map(notificationMapper::toDto)

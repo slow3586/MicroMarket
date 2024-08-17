@@ -1,6 +1,10 @@
 package com.slow3586.micromarket.api.kafka;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +16,9 @@ import org.springframework.kafka.support.serializer.JsonSerde;
 import java.util.UUID;
 
 @Configuration
+@Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(makeFinal = true, level = AccessLevel.PROTECTED)
 public class DefaultKafkaConfig {
     @NonFinal
     @Value("${spring.application.name}")

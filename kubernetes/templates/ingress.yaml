@@ -2,11 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: micromarket-ingress
-  annotations:
-    kubernetes.io/ingress.class: nginx
 spec:
+  ingressClassName: nginx
   rules:
-    - host: micromarket.ru
+    - host: {{.Values.ingress.host}}
       http:
         paths:
           - path: /api/balance

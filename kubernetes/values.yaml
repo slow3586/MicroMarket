@@ -1,4 +1,6 @@
 imagePullPolicy: Always
+ingress:
+  host: micromarket.ru
 springEnv:
   - name: server.port
     value: "8080"
@@ -10,6 +12,10 @@ springEnv:
     value: "jdbc:postgresql://postgres-postgresql-hl:5432/postgres"
   - name: spring.data.redis.host
     value: "redis-master"
+  - name: spring.kafka.admin.fail-fast
+    value: "true"
+  - name: spring.kafka.listener.missing-topics-fatal
+    value: "true"
   - name: management.tracing.enabled
     value: "true"
   - name: management.otlp.tracing.endpoint

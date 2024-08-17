@@ -15,7 +15,7 @@ spec:
       - id: 0
         type: persistent-claim
         size: 1Gi
-        deleteClaim: false
+        deleteClaim: true
         kraftMetadata: shared
 ---
 
@@ -44,7 +44,6 @@ spec:
         type: nodeport
         tls: false
     config:
-      cluster.id: MkU3OEVBNTcwNTJENDM2Qk
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1
       transaction.state.log.min.isr: 1

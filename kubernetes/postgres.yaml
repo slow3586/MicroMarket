@@ -4,6 +4,6 @@ global:
       postgresPassword: "postgres"
       username: "postgres"
       password: "postgres"
-    configuration: |-
-      wal_level=logical
-      ssl=off
+primary:
+  extendedConfiguration: |-
+    wal_level = logical
