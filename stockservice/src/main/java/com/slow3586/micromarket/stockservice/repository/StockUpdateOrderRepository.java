@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface StockUpdateOrderRepository extends JpaRepository<StockUpdateOrder, UUID> {
     @Query("""
         select coalesce(sum(s.value), 0) from stock_update_order s
+        where s.productId = :productId
         """)
     long sumAllByProductId(UUID productId);
 

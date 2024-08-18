@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: notificationservice-container
-          image: slow3586/micromarket:notificationservice-0.1.0
+          image: slow3586/micromarket:notificationservice-0.2.0
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           env:
             {{- range .Values.springEnv }}
@@ -51,7 +51,7 @@ metadata:
   labels:
     name: notificationservice
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     name: notificationservice
   ports:

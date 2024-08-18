@@ -95,8 +95,15 @@ public class OrderService {
         log.info("Checking order timeouts");
 
         orderRepository.findAllByStatusAndCreatedAtBeforeOrderByCreatedAt(
-                OrderConfig.Status.PAYMENT_AWAITING,
+                OrderConfig.Status.ACTIVATED,
                 Instant.now().minus(10, ChronoUnit.SECONDS))
+            .forEach(order -> orderRepository.save(order
+                .setStatus(OrderConfig.Status.CANCELLED)
+                .setError(OrderConfig.Error.ACTIVATED_TIMEOUT)));
+
+        orderRepository.findAllByStatusAndCreatedAtBeforeOrderByCreatedAt(
+                OrderConfig.Status.PAYMENT_AWAITING,
+                Instant.now().minus(30, ChronoUnit.SECONDS))
             .forEach(order -> orderRepository.save(order
                 .setStatus(OrderConfig.Status.CANCELLED)
                 .setError(OrderConfig.Error.PAYMENT_TIMEOUT)));

@@ -7,6 +7,7 @@
     "redis.uri": "redis://redis:6379",
     "redis.command": "SET",
     "redis.separator": "::",
+    "redis.password": "redis",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter.schemas.enable": "false"

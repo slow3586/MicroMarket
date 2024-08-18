@@ -1,13 +1,13 @@
 {
 	"info": {
-		"_postman_id": "2a5398a5-3a00-4ad9-8d64-c6404f2a3305",
-		"name": "MicroMarket Bad",
+		"_postman_id": "067f1942-9f4f-45f9-be8d-a5f9ea12afb0",
+		"name": "MicroMarket Cancel Delivery",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "20842312"
 	},
 	"item": [
 		{
-			"name": "Register product seller user",
+			"name": "Register seller user",
 			"event": [
 				{
 					"listen": "test",
@@ -58,9 +58,9 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/user/register",
+					"raw": "{{baseUrl}}/api/user/register",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -72,7 +72,72 @@
 			"response": []
 		},
 		{
-			"name": "Log in as product seller user",
+			"name": "Register buyer user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});\r",
+							"\r",
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Correct ID\", function () {\r",
+							"    pm.expect(jsonData.id).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Correct name\", function () {\r",
+							"    pm.expect(jsonData.name).to.eq(pm.collectionVariables.get(\"buyerUserLogin\"));\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"buyerUserId\", jsonData.id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"login\": \"{{buyerUserLogin}}\",\r\n  \"password\": \"password\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/user/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get seller user token",
 			"event": [
 				{
 					"listen": "test",
@@ -113,9 +178,64 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/user/login",
+					"raw": "{{baseUrl}}/api/user/login",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get buyer user token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Not blank\", function () {\r",
+							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"No exceptions\", function () {\r",
+							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"buyerBearerToken\", pm.response.text());"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"login\": \"{{buyerUserLogin}}\",\r\n  \"password\": \"password\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/user/login",
+					"host": [
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -193,9 +313,9 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/product/create",
+					"raw": "{{baseUrl}}/api/product/create",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -267,134 +387,14 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/stock/update",
+					"raw": "{{baseUrl}}/api/stock/update",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
 						"stock",
 						"update"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Register buyer user",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Not blank\", function () {\r",
-							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"No exceptions\", function () {\r",
-							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
-							"});\r",
-							"\r",
-							"var jsonData = pm.response.json();\r",
-							"\r",
-							"pm.test(\"Correct ID\", function () {\r",
-							"    pm.expect(jsonData.id).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Correct name\", function () {\r",
-							"    pm.expect(jsonData.name).to.eq(pm.collectionVariables.get(\"buyerUserLogin\"));\r",
-							"});\r",
-							"\r",
-							"pm.collectionVariables.set(\"buyerUserId\", jsonData.id);"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "noauth"
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"login\": \"{{buyerUserLogin}}\",\r\n  \"password\": \"password\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{url}}/api/user/register",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"api",
-						"user",
-						"register"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Log in as buyer user",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Not blank\", function () {\r",
-							"    pm.expect(pm.response.text()).to.have.length.above(0);\r",
-							"});\r",
-							"\r",
-							"pm.test(\"No exceptions\", function () {\r",
-							"    pm.expect(pm.response.text()).to.not.include(\"Exception\");\r",
-							"});\r",
-							"\r",
-							"pm.collectionVariables.set(\"buyerBearerToken\", pm.response.text());"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "noauth"
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"login\": \"{{buyerUserLogin}}\",\r\n  \"password\": \"password\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{url}}/api/user/login",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"api",
-						"user",
-						"login"
 					]
 				}
 			},
@@ -468,9 +468,9 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/product/{{productId}}",
+					"raw": "{{baseUrl}}/api/product/{{productId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -552,9 +552,9 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/order/create",
+					"raw": "{{baseUrl}}/api/order/create",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -634,9 +634,9 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/order/create",
+					"raw": "{{baseUrl}}/api/order/create",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -690,9 +690,9 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/order/update/active/{{orderId}}",
+					"raw": "{{baseUrl}}/api/order/update/active/{{orderId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -749,9 +749,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/order/{{orderId}}",
+					"raw": "{{baseUrl}}/api/order/{{orderId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -809,9 +809,9 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/api/balance/replenish/create",
+					"raw": "{{baseUrl}}/api/balance/replenish/create",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -867,9 +867,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/order/{{orderId}}",
+					"raw": "{{baseUrl}}/api/order/{{orderId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -922,9 +922,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/balance",
+					"raw": "{{baseUrl}}/api/balance",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -992,9 +992,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/delivery/order/{{orderId}}",
+					"raw": "{{baseUrl}}/api/delivery/order/{{orderId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1062,9 +1062,9 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/delivery/update/sent/{{deliveryId}}",
+					"raw": "{{baseUrl}}/api/delivery/update/sent/{{deliveryId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1129,9 +1129,9 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/delivery/update/cancelled/{{deliveryId}}",
+					"raw": "{{baseUrl}}/api/delivery/update/cancelled/{{deliveryId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1192,9 +1192,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/order/{{orderId}}",
+					"raw": "{{baseUrl}}/api/order/{{orderId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1253,9 +1253,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/stock/order/{{orderId}}",
+					"raw": "{{baseUrl}}/api/stock/order/{{orderId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1309,9 +1309,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/stock/{{productId}}",
+					"raw": "{{baseUrl}}/api/stock/{{productId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1370,9 +1370,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/balance/order/{{orderId}}",
+					"raw": "{{baseUrl}}/api/balance/order/{{orderId}}",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1426,9 +1426,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/balance",
+					"raw": "{{baseUrl}}/api/balance",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1480,9 +1480,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/api/balance",
+					"raw": "{{baseUrl}}/api/balance",
 					"host": [
-						"{{url}}"
+						"{{baseUrl}}"
 					],
 					"path": [
 						"api",
@@ -1531,7 +1531,7 @@
 		},
 		{
 			"key": "sellerUserLogin",
-			"value": "seller",
+			"value": "seller_bad",
 			"type": "string"
 		},
 		{
@@ -1546,7 +1546,7 @@
 		},
 		{
 			"key": "buyerUserLogin",
-			"value": "buyer",
+			"value": "buyer_bad",
 			"type": "string"
 		},
 		{
@@ -1568,7 +1568,7 @@
 			"value": ""
 		},
 		{
-			"key": "url",
+			"key": "baseUrl",
 			"value": "http://localhost:8080",
 			"type": "string"
 		}

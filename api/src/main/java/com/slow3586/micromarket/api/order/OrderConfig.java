@@ -32,6 +32,7 @@ public class OrderConfig {
     public enum Error {
         UNKNOWN,
         ORDER_CANCELLED,
+        ACTIVATED_TIMEOUT,
         PAYMENT_TIMEOUT,
         PAYMENT_CANCELLED,
         DELIVERY_TIMEOUT,
