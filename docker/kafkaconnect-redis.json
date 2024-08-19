@@ -2,12 +2,14 @@
   "name": "redissinkconnector",
   "config": {
     "connector.class": "com.redis.kafka.connect.RedisSinkConnector",
-    "tasks.max": "1",
+    "tasks.max": "2",
     "topics.regex": "entity.(.*)",
     "redis.uri": "redis://redis:6379",
     "redis.command": "SET",
     "redis.separator": "::",
     "redis.password": "redis",
+    "consumer.fetch.max.wait.ms": "50",
+    "consumer.fetch.min.bytes": "1048576",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter": "org.apache.kafka.connect.storage.StringConverter",
     "value.converter.schemas.enable": "false"

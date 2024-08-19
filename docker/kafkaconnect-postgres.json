@@ -2,7 +2,7 @@
   "name": "postgresconnector",
   "config": {
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-    "tasks.max": "1",
+    "tasks.max": "2",
     "database.hostname": "postgres",
     "database.port": "5432",
     "database.user": "postgres",
