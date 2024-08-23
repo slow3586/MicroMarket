@@ -1,0 +1,7 @@
+collector:
+  service:
+    otlp:
+      grpc:
+        name: otlp-grpc
+      http:
+        name: otlp-http

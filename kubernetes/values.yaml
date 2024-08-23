@@ -1,4 +1,4 @@
-imagePullPolicy: Always
+imagePullPolicy: IfNotPresent
 ingress:
   host: micromarket.ru
 springEnv:
@@ -19,7 +19,7 @@ springEnv:
   - name: management.tracing.enabled
     value: "true"
   - name: management.otlp.tracing.endpoint
-    value: "http://jaeger-service:14250"
+    value: "http://jaeger-collector:4317"
   - name: SECRET_KEY
     value: "qweqweqweqweqweqweqweqweqweqweqrqwrqwrtweqtewqtweq"
   - name: API_KEY

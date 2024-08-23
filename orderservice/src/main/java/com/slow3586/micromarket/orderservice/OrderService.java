@@ -50,16 +50,15 @@ public class OrderService {
             .findByBuyerIdAndProductIdAndStatus(
                 SecurityUtils.getPrincipalId(),
                 request.getProductId(),
-                OrderConfig.Status.TEMPLATE
-            ).orElseGet(() ->
+                OrderConfig.Status.TEMPLATE)
+            .map(o -> o.setQuantity(o.getQuantity() + request.getQuantity()))
+            .orElseGet(() ->
                 orderRepository.save(
                     new Order()
                         .setBuyerId(SecurityUtils.getPrincipalId())
                         .setProductId(request.getProductId())
-                        .setQuantity(0)
+                        .setQuantity(request.getQuantity())
                         .setStatus(OrderConfig.Status.TEMPLATE)));
-
-        order.setQuantity(order.getQuantity() + request.getQuantity());
 
         return orderMapper.toDto(order);
     }

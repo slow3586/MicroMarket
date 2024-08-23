@@ -36,7 +36,9 @@
 * kubernetes/install.sh
 
 ### Схема
-#### Упрощённая
+#### Сервисы
+![chart](docs/chart_services.png)
+#### Упрощённая саги
 ![chart](docs/chart_simple.png)
-#### Полная
+#### Полная саги
 ![chart](docs/chart_saga.png)

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafdrop
+spec:
+  replicas: 1
+  minReadySeconds: 120
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      name: kafdrop
+  template:
+    metadata:
+      labels:
+        name: kafdrop
+    spec:
+      containers:
+        - name: kafdrop-container
+          image: obsidiandynamics/kafdrop:4.0.1
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: KAFKA_BROKERCONNECT
+            value: kafka-kafka-bootstrap:9092
+          ports:
+            - containerPort: 9000
+          readinessProbe:
+            httpGet:
+              port: 9000
+            timeoutSeconds: 5
+            periodSeconds: 5
+            initialDelaySeconds: 120
+          livenessProbe:
+            httpGet:
+              port: 9000
+            timeoutSeconds: 5
+            periodSeconds: 5
+            initialDelaySeconds: 120
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafdrop-service
+  labels:
+    name: kafdrop
+spec:
+  type: LoadBalancer
+  selector:
+    name: kafdrop
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+      name: kafdrop
